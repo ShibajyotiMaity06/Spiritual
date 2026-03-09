@@ -1,0 +1,91 @@
+PRD: DailyFaith v2.0 (Updated with Hybrid WhatsApp Strategy)
+1. Product Overview
+Vision: Deliver daily spiritual content (verses + translations + audio) from Bhagavad Gita, Quran, and Bible in users' native languages via WhatsApp and Email with intelligent cost optimization.
+
+Mission: Make scripture accessible, consistent, and beautiful for 100M+ Indians in their mother tongue while keeping delivery costs near zero through smart engagement mechanics.
+
+Target Users:
+
+Religious Indians aged 25-55
+Indian diaspora (US, UK, Middle East)
+Parents wanting to teach kids their scripture
+Spiritual seekers wanting daily discipline
+2. Core Features (MVP - Ship in 30 days)
+2.1 User Onboarding Flow (Updated with Multi-Landing Strategy)
+text
+
+Main Landing Page (DailyFaith.in - Neutral/Secular)
+│
+├── 3 Beautiful Cards:
+│   ├── 🕉️ Hindu (Golden/Saffron theme)
+│   ├── ☪️ Muslim (Green/White theme)
+│   └── ✝️ Christian (Blue/White theme)
+│
+│   [User clicks one card]
+│   │
+│   ▼
+│
+Religion-Specific Sub-Landing Page
+spiritiual.com/gita or /quran like this 
+
+
+│
+├── Hero: "Daily [Gita/Quran/Bible] in Your Language"
+├── Language Selection (Hindi, English, Tamil, Telugu, Malayalam, Kannada, Urdu)
+├── Screenshots of beautiful verse cards
+├── Testimonials from that religion's users
+│
+│   ▼
+│
+Registration Form
+│
+├── Name
+whatsapp or email as choice of getting the sloka and based on that take input
+├── Language Preference
+├── Preferred Delivery Time (6 AM / 7 AM / 8 AM dropdown)
+│
+│   ▼
+│
+Plan Selection
+│
+├── 🆓 FREE Plan (₹0)
+│   ├── Daily verse via WhatsApp (manual interaction required)
+│   ├── Must send ANY message to get today's verse
+│   ├── No auto-delivery guarantee
+│   ├── Email summary once/week
+│
+├── 💎 BASIC Plan (₹49/month or ₹499/year)
+│   ├── AUTO-DELIVERY guaranteed at chosen time
+│   ├── Daily verse via WhatsApp (no action needed)
+│   ├── Daily email with beautiful HTML template
+│   ├── Weekend reflection questions
+│   ├── Streak counter & gamification
+│
+└── 🔥 PREMIUM Plan (₹149/month or ₹1499/year)
+    ├── Everything in Basic
+    ├── Daily audio explanation (60-90 sec)
+    ├── Chapter-wise deep dives (weekly)
+    ├── PDF downloads of full chapters
+    ├── Ad-free experience
+    ├── Priority support
+│
+│   ▼
+│
+Payment Page (Razorpay - ONLY for paid plans)
+│
+│   ▼
+│
+WhatsApp Opt-in Confirmation
+│
+├── Auto-send WhatsApp message: "🙏 Welcome to [GitaDaily]! 
+│   Reply with ✅ to confirm and receive your first verse."
+│
+│   [User replies ✅]
+│   │
+│   ▼
+│
+Service Window OPENS (24hr) → First verse sent immediately (₹0 cost)
+│
+│   ▼
+│
+Onboarding Complete → User Dashboard Access
