@@ -2,6 +2,8 @@
 // models/DeliveryLog.js
 // ═══════════════════════════════════════════════════════
 
+const mongoose = require('mongoose');
+
 const deliveryLogSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 

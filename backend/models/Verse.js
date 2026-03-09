@@ -2,6 +2,8 @@
 // models/Verse.js
 // ═══════════════════════════════════════════════════════
 
+const mongoose = require('mongoose');
+
 const verseSchema = new mongoose.Schema({
   // Source Info
   religion: { 

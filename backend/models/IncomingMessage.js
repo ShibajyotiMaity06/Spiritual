@@ -2,6 +2,8 @@
 // models/IncomingMessage.js
 // ═══════════════════════════════════════════════════════
 
+const mongoose = require('mongoose');
+
 const incomingMessageSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 

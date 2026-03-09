@@ -2,6 +2,8 @@
 // models/Analytics.js (Daily aggregate stats)
 // ═══════════════════════════════════════════════════════
 
+const mongoose = require('mongoose');
+
 const analyticsSchema = new mongoose.Schema({
   date: { type: Date, required: true, unique: true },
   

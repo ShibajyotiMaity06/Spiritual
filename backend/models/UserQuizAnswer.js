@@ -2,6 +2,8 @@
 // models/UserQuizAnswer.js
 // ═══════════════════════════════════════════════════════
 
+const mongoose = require('mongoose');
+
 const userQuizAnswerSchema = new mongoose.Schema({
   userId: { 
     type: mongoose.Schema.Types.ObjectId, 
