@@ -84,7 +84,7 @@ const validateVerseQuery = (req, res, next) => {
 
 // Validate plan selection
 const validatePlanSelection = (req, res, next) => {
-  const validPlans = ['basic_monthly', 'basic_yearly', 'premium_monthly', 'premium_yearly'];
+  const validPlans = ['basic_monthly', 'standard_monthly', 'premium_monthly', 'premium_yearly'];
   const { plan } = req.body;
 
   if (!plan || !validPlans.includes(plan)) {

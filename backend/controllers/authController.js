@@ -33,16 +33,17 @@ const register = async (req, res, next) => {
       religion,
       language,
       preferredTime,
-      deliveryChannel, // 'whatsapp' or 'email'
       signupSource
     } = req.body;
 
     // Check duplicates
+    const duplicateQuery = [{ email: email.toLowerCase() }];
+    if (whatsappNumber) {
+      duplicateQuery.push({ whatsappNumber });
+    }
+
     const existingUser = await User.findOne({
-      $or: [
-        { email: email.toLowerCase() },
-        ...(whatsappNumber ? [{ whatsappNumber }] : [])
-      ]
+      $or: duplicateQuery
     });
 
     if (existingUser) {
@@ -54,7 +55,11 @@ const register = async (req, res, next) => {
       });
     }
 
-    // Create user
+    // 3-day free trial setup
+    const now = new Date();
+    const trialExpiry = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000); // 3 days
+
+    // Create user with trial (email only)
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
@@ -62,19 +67,21 @@ const register = async (req, res, next) => {
       religion,
       language,
       preferredTime: preferredTime || 6,
-      deliveryChannel: deliveryChannel || 'whatsapp',
-      isWhatsappOptedIn: deliveryChannel === 'whatsapp',
-      isEmailOptedIn: deliveryChannel === 'email',
+      deliveryChannel: 'email', // Free/trial always starts with email
+      isWhatsappOptedIn: false,
+      isEmailOptedIn: true,
       signupSource: signupSource || 'organic',
       referralCode: generateReferralCode(name),
-      subscriptionStatus: 'free'
+      subscriptionStatus: 'trial',
+      trialStartDate: now,
+      trialExpiry: trialExpiry
     });
 
     const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Welcome to DailyFaith 🙏',
+      message: 'Registration successful! Welcome to DailyFaith 🙏 Your 3-day free trial has started.',
       data: {
         user: {
           id: user._id,
@@ -83,8 +90,9 @@ const register = async (req, res, next) => {
           religion: user.religion,
           language: user.language,
           subscriptionStatus: user.subscriptionStatus,
-          referralCode: user.referralCode,
-          deliveryChannel: user.deliveryChannel || deliveryChannel
+          deliveryChannel: user.deliveryChannel,
+          trialExpiry: user.trialExpiry,
+          referralCode: user.referralCode
         },
         token
       }
@@ -129,6 +137,12 @@ const login = async (req, res, next) => {
       });
     }
 
+    // Check if trial has expired and update status
+    if (user.subscriptionStatus === 'trial' && user.trialExpiry && user.trialExpiry < new Date()) {
+      user.subscriptionStatus = 'expired';
+      await user.save();
+    }
+
     // Update last activity
     user.lastActivityAt = Date.now();
     await user.save();
@@ -146,10 +160,13 @@ const login = async (req, res, next) => {
           religion: user.religion,
           language: user.language,
           subscriptionStatus: user.subscriptionStatus,
+          deliveryChannel: user.deliveryChannel,
           preferredTime: user.preferredTime,
           streakCount: user.streakCount,
           totalVersesReceived: user.totalVersesReceived,
-          referralCode: user.referralCode
+          referralCode: user.referralCode,
+          trialExpiry: user.trialExpiry,
+          subscriptionExpiry: user.subscriptionExpiry
         },
         token
       }
@@ -173,6 +190,12 @@ const getMe = async (req, res, next) => {
         success: false,
         message: 'User not found'
       });
+    }
+
+    // Check trial expiry on profile fetch too
+    if (user.subscriptionStatus === 'trial' && user.trialExpiry && user.trialExpiry < new Date()) {
+      await User.findByIdAndUpdate(user._id, { subscriptionStatus: 'expired' });
+      user.subscriptionStatus = 'expired';
     }
 
     res.status(200).json({

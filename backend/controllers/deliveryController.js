@@ -4,8 +4,12 @@
 
 const DeliveryLog = require('../models/DeliveryLog');
 const User = require('../models/User');
-const Verse = require('../models/Verse');
 const IncomingMessage = require('../models/IncomingMessage');
+const { PLAN_FEATURES } = require('../config/constants');
+const { formatWhatsAppMessage, formatEmailHTML, formatEmailSubject } = require('../services/messageFormatter');
+const { sendWhatsAppMessage } = require('../services/whatsappService');
+const { sendVerseEmail } = require('../services/emailService');
+const { getVerseByIndex, deliverVerseOnDemand, getEffectiveChannel } = require('../services/schedulerService');
 
 // ─────────────────────────────────────────────────────
 // GET /api/delivery/logs — Get delivery logs for user
@@ -17,7 +21,6 @@ const getMyDeliveryLogs = async (req, res, next) => {
 
     const [logs, total] = await Promise.all([
       DeliveryLog.find({ userId: req.user._id })
-        .populate('verseId', 'chapter verseNumber book religion')
         .sort({ timestamp: -1 })
         .skip(skip)
         .limit(Number(limit))
@@ -58,11 +61,8 @@ const triggerDelivery = async (req, res, next) => {
       });
     }
 
-    // Get next verse for user
-    const verse = await Verse.findOne({ religion: user.religion })
-      .sort({ chapter: 1, verseNumber: 1 })
-      .skip(user.currentVerseIndex);
-
+    // Get next verse from JSON dataset
+    const verse = getVerseByIndex(user.currentVerseIndex);
     if (!verse) {
       return res.status(404).json({
         success: false,
@@ -70,21 +70,45 @@ const triggerDelivery = async (req, res, next) => {
       });
     }
 
-    // Determine delivery cost
-    let cost = 0;
-    if (deliveryMethod === 'whatsapp_template') cost = 0.50; // ~₹0.50 per template
-    if (deliveryMethod === 'whatsapp_freeform') cost = 0; // Free within service window
-    if (deliveryMethod === 'email') cost = 0.01; // Negligible
+    const results = { whatsapp: null, email: null };
 
-    // Create delivery log
-    const log = await DeliveryLog.create({
-      userId: user._id,
-      verseId: verse._id,
-      deliveryMethod: deliveryMethod || 'email',
-      status: 'sent',
-      cost,
-      timestamp: new Date()
-    });
+    // Use effective channel based on plan, or override with deliveryMethod if specified
+    const channel = deliveryMethod || getEffectiveChannel(user) || 'email';
+
+    // ── Send via WhatsApp ──
+    if ((channel === 'whatsapp' || channel === 'whatsapp_template' || channel === 'whatsapp_freeform') && user.whatsappNumber) {
+      const whatsappText = formatWhatsAppMessage(verse, user);
+      const waResult = await sendWhatsAppMessage(user.whatsappNumber, whatsappText);
+      results.whatsapp = waResult;
+
+      await DeliveryLog.create({
+        userId: user._id,
+        verseId: null,
+        deliveryMethod: 'whatsapp_freeform',
+        status: waResult.success ? 'sent' : 'failed',
+        cost: 0,
+        whatsappMessageId: waResult.messageId || null,
+        timestamp: new Date()
+      });
+    }
+
+    // ── Send via Email ──
+    if (channel === 'email' || (!results.whatsapp)) {
+      const subject = formatEmailSubject(verse);
+      const html = formatEmailHTML(verse, user);
+      const emailResult = await sendVerseEmail(user.email, subject, html);
+      results.email = emailResult;
+
+      await DeliveryLog.create({
+        userId: user._id,
+        verseId: null,
+        deliveryMethod: 'email',
+        status: emailResult.success ? 'sent' : 'failed',
+        cost: 0.01,
+        emailMessageId: emailResult.messageId || null,
+        timestamp: new Date()
+      });
+    }
 
     // Update user progress
     await User.findByIdAndUpdate(userId, {
@@ -93,21 +117,17 @@ const triggerDelivery = async (req, res, next) => {
       lastActivityAt: new Date()
     });
 
-    // Update verse stats
-    await Verse.findByIdAndUpdate(verse._id, {
-      $inc: { deliveredCount: 1 }
-    });
-
     res.status(200).json({
       success: true,
       message: 'Verse delivery triggered successfully',
       data: {
-        delivery: log,
         verse: {
-          id: verse._id,
           chapter: verse.chapter,
-          verseNumber: verse.verseNumber
-        }
+          verse: verse.verse,
+          id: verse.id
+        },
+        channel,
+        results
       }
     });
   } catch (error) {
@@ -117,16 +137,28 @@ const triggerDelivery = async (req, res, next) => {
 
 // ─────────────────────────────────────────────────────
 // POST /api/delivery/webhook — WhatsApp incoming message
-// (Called by WhatsApp Business API provider)
+// (Called by Twilio webhook for incoming WhatsApp messages)
 // ─────────────────────────────────────────────────────
 const whatsappWebhook = async (req, res, next) => {
   try {
-    const { from, text, messageType, mediaUrl } = req.body;
+    // Twilio sends different field names than Meta
+    const from = req.body.From || req.body.from || '';
+    const text = req.body.Body || req.body.text || '';
+    const messageType = req.body.MessageType || req.body.messageType || 'text';
+    const mediaUrl = req.body.MediaUrl0 || req.body.mediaUrl || null;
 
-    // Find user by WhatsApp number
-    const user = await User.findOne({ whatsappNumber: from });
+    // Strip 'whatsapp:+' prefix from Twilio format
+    const phoneNumber = from.replace('whatsapp:', '').replace('+', '');
+
+    // Find user by WhatsApp number (try with and without country code)
+    let user = await User.findOne({ whatsappNumber: phoneNumber });
     if (!user) {
-      // Unknown number — could be a new lead
+      // Try without country code (strip 91 prefix for Indian numbers)
+      const shortNumber = phoneNumber.startsWith('91') ? phoneNumber.slice(2) : phoneNumber;
+      user = await User.findOne({ whatsappNumber: shortNumber });
+    }
+
+    if (!user) {
       return res.status(200).json({
         success: true,
         message: 'Message received from unknown number'
@@ -147,48 +179,61 @@ const whatsappWebhook = async (req, res, next) => {
       intent = 'feedback';
     }
 
-    // Save incoming message (opens 24hr service window)
+    // Save incoming message
     const message = await IncomingMessage.create({
       userId: user._id,
-      whatsappNumber: from,
-      messageType: messageType || 'text',
+      whatsappNumber: phoneNumber,
+      messageType,
       messageText: text,
       mediaUrl,
       intent,
       opensServiceWindow: true
     });
 
-    // Update user last activity and streak
+    // Update user last activity
     await User.findByIdAndUpdate(user._id, {
       lastActivityAt: new Date(),
       isWhatsappOptedIn: true
     });
 
-    // If intent is get_verse and user is on free plan,
-    // this opens the service window — trigger freeform delivery
+    // If intent is get_verse → send verse via WhatsApp
     let verseDelivered = false;
-    if (intent === 'get_verse' && user.subscriptionStatus === 'free') {
-      // Here you'd integrate with WhatsApp API to send the verse
-      // For now, we just log the delivery as freeform (₹0 cost)
-      const verse = await Verse.findOne({ religion: user.religion })
-        .sort({ chapter: 1, verseNumber: 1 })
-        .skip(user.currentVerseIndex);
+    if (intent === 'get_verse') {
+      // Check if user's plan allows WhatsApp delivery
+      const features = PLAN_FEATURES[user.subscriptionStatus];
+      const canUseWhatsApp = features && features.allowedChannels.includes('whatsapp');
 
-      if (verse) {
-        await DeliveryLog.create({
-          userId: user._id,
-          verseId: verse._id,
-          deliveryMethod: 'whatsapp_freeform',
-          status: 'sent',
-          cost: 0
-        });
+      if (canUseWhatsApp) {
+        const verse = getVerseByIndex(user.currentVerseIndex);
 
-        await User.findByIdAndUpdate(user._id, {
-          $inc: { currentVerseIndex: 1, totalVersesReceived: 1, streakCount: 1 },
-          lastVerseDeliveredAt: new Date()
-        });
+        if (verse) {
+          const whatsappText = formatWhatsAppMessage(verse, user);
+          const waResult = await sendWhatsAppMessage(user.whatsappNumber || phoneNumber, whatsappText);
 
-        verseDelivered = true;
+          await DeliveryLog.create({
+            userId: user._id,
+            verseId: null,
+            deliveryMethod: 'whatsapp_freeform',
+            status: waResult.success ? 'sent' : 'failed',
+            cost: 0,
+            whatsappMessageId: waResult.messageId || null,
+            timestamp: new Date()
+          });
+
+          await User.findByIdAndUpdate(user._id, {
+            $inc: { currentVerseIndex: 1, totalVersesReceived: 1, streakCount: 1 },
+            lastVerseDeliveredAt: new Date()
+          });
+
+          verseDelivered = waResult.success;
+        }
+      } else {
+        // User's plan doesn't support WhatsApp — send a message informing them
+        const { sendWhatsAppMessage: sendWA } = require('../services/whatsappService');
+        await sendWA(
+          user.whatsappNumber || phoneNumber,
+          '🙏 Your current plan supports email delivery only. Please upgrade to the Standard (₹99/mo) or higher plan to receive verses via WhatsApp.\n\nVisit dailyfaith.in to upgrade!'
+        );
       }
     }
 
@@ -209,7 +254,7 @@ const whatsappWebhook = async (req, res, next) => {
 
 // ─────────────────────────────────────────────────────
 // PUT /api/delivery/status — Update delivery status
-// (Callback from WhatsApp/Email provider)
+// (Callback from Twilio/Resend status webhook)
 // ─────────────────────────────────────────────────────
 const updateDeliveryStatus = async (req, res, next) => {
   try {

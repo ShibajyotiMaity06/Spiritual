@@ -160,7 +160,7 @@ export default function QuranLanding() {
                     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-serif font-bold text-center text-[#1A2520] mb-8">Begin Your Practice</h2>
                     </div>
-                    <PricingSection />
+                    <PricingSection autoBook="quran" />
                 </div>
             </main>
 

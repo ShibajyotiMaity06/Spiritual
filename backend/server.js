@@ -5,10 +5,12 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const path = require('path');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter } = require('./middleware/rateLimiter');
+const { startScheduler } = require('./services/schedulerService');
 
 // Load env vars
 dotenv.config();
@@ -40,6 +42,15 @@ app.use(express.urlencoded({ extended: true }));
 // Rate limiting on all API routes
 app.use('/api', apiLimiter);
 
+// Serve audio files statically (Hindi & English only, no Tamil)
+app.use('/audio', (req, res, next) => {
+  // Block Tamil audio files
+  if (req.path.includes('_tamil')) {
+    return res.status(404).json({ success: false, message: 'Audio not available' });
+  }
+  next();
+}, express.static(path.join(__dirname, '..', 'audio')));
+
 // ───────────────── Health Check ─────────────────
 
 app.get('/', (req, res) => {
@@ -62,13 +73,14 @@ app.get('/api/health', (req, res) => {
 
 // ───────────────── API Routes ─────────────────
 
-app.use('/api/auth',      require('./routes/authRoutes'));
-app.use('/api/users',     require('./routes/userRoutes'));
-app.use('/api/verses',    require('./routes/verseRoutes'));
-app.use('/api/payments',  require('./routes/paymentRoutes'));
-app.use('/api/delivery',  require('./routes/deliveryRoutes'));
-app.use('/api/quizzes',   require('./routes/quizRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/verses', require('./routes/verseRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/delivery', require('./routes/deliveryRoutes'));
+app.use('/api/quizzes', require('./routes/quizRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/subscribe', require('./routes/subscribeRoutes'));
 
 // ───────────────── 404 Handler ─────────────────
 
@@ -90,7 +102,12 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`\n🚀 DailyFaith server running on port ${PORT}`);
   console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`   Health: http://localhost:${PORT}/api/health\n`);
+  console.log(`   Health: http://localhost:${PORT}/api/health`);
+  console.log(`   Audio: http://localhost:${PORT}/audio/`);
+
+  // Start the verse delivery scheduler
+  startScheduler();
+  console.log('');
 });
 
 module.exports = app;

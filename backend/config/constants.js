@@ -8,6 +8,7 @@ module.exports = {
     FREE: 'free',
     TRIAL: 'trial',
     PAID_BASIC: 'paid_basic',
+    PAID_STANDARD: 'paid_standard',
     PAID_PREMIUM: 'paid_premium',
     EXPIRED: 'expired'
   },
@@ -15,9 +16,19 @@ module.exports = {
   // Pricing (INR)
   PRICING: {
     basic_monthly: 49,
-    basic_yearly: 499,
+    standard_monthly: 99,
     premium_monthly: 149,
-    premium_yearly: 1499
+    premium_yearly: 1599
+  },
+
+  // Plan features mapping
+  PLAN_FEATURES: {
+    free: { allowedChannels: ['email'], audio: false, trialDays: 3 },
+    trial: { allowedChannels: ['email'], audio: false, trialDays: 3 },
+    paid_basic: { allowedChannels: ['email'], audio: false },
+    paid_standard: { allowedChannels: ['email', 'whatsapp'], audio: true },
+    paid_premium: { allowedChannels: ['email', 'whatsapp'], audio: true },
+    expired: { allowedChannels: [], audio: false }
   },
 
   // Religions
@@ -35,8 +46,7 @@ module.exports = {
 
   // Delivery methods
   DELIVERY_METHODS: {
-    WHATSAPP_TEMPLATE: 'whatsapp_template',
-    WHATSAPP_FREEFORM: 'whatsapp_freeform',
+    WHATSAPP: 'whatsapp',
     EMAIL: 'email'
   },
 

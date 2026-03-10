@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const Razorpay = require('razorpay');
 const Payment = require('../models/Payment');
 const User = require('../models/User');
-const { PRICING } = require('../config/constants');
+const { PRICING, PLAN_FEATURES } = require('../config/constants');
 
 // Initialize Razorpay (lazy — only when keys are configured)
 let razorpayInstance = null;
@@ -25,13 +25,23 @@ const getRazorpay = () => {
 // ─────────────────────────────────────────────────────
 const createOrder = async (req, res, next) => {
   try {
-    const { plan } = req.body; // 'basic_monthly', 'basic_yearly', etc.
+    const { plan, deliveryChannel } = req.body; // plan: 'basic_monthly', 'standard_monthly', etc.
 
     const amount = PRICING[plan];
     if (!amount) {
       return res.status(400).json({
         success: false,
         message: 'Invalid plan selected'
+      });
+    }
+
+    // Validate delivery channel for plans that support whatsapp
+    const planStatus = getPlanStatus(plan);
+    const features = PLAN_FEATURES[planStatus];
+    if (deliveryChannel && features && !features.allowedChannels.includes(deliveryChannel)) {
+      return res.status(400).json({
+        success: false,
+        message: `The ${plan} plan does not support ${deliveryChannel} delivery`
       });
     }
 
@@ -44,6 +54,7 @@ const createOrder = async (req, res, next) => {
       notes: {
         userId: req.user._id.toString(),
         plan,
+        deliveryChannel: deliveryChannel || 'email',
         email: req.user.email
       }
     });
@@ -54,7 +65,8 @@ const createOrder = async (req, res, next) => {
       amount,
       plan,
       razorpayOrderId: order.id,
-      status: 'pending'
+      status: 'pending',
+      metadata: { deliveryChannel: deliveryChannel || 'email' }
     });
 
     res.status(200).json({
@@ -71,6 +83,16 @@ const createOrder = async (req, res, next) => {
     next(error);
   }
 };
+
+// ─────────────────────────────────────────────────────
+// Helper: Map plan name to subscription status
+// ─────────────────────────────────────────────────────
+function getPlanStatus(plan) {
+  if (plan.startsWith('basic')) return 'paid_basic';
+  if (plan.startsWith('standard')) return 'paid_standard';
+  if (plan.startsWith('premium')) return 'paid_premium';
+  return 'paid_basic';
+}
 
 // ─────────────────────────────────────────────────────
 // POST /api/payments/verify — Verify Razorpay payment
@@ -117,12 +139,18 @@ const verifyPayment = async (req, res, next) => {
     }
 
     // Determine subscription details
-    const isBasic = payment.plan.startsWith('basic');
+    const subscriptionStatus = getPlanStatus(payment.plan);
     const isYearly = payment.plan.endsWith('yearly');
-    const subscriptionStatus = isBasic ? 'paid_basic' : 'paid_premium';
     const durationMs = isYearly
       ? 365 * 24 * 60 * 60 * 1000
       : 30 * 24 * 60 * 60 * 1000;
+
+    // Determine delivery channel from payment metadata or default
+    const deliveryChannel = payment.metadata?.deliveryChannel || 'email';
+    const features = PLAN_FEATURES[subscriptionStatus];
+    const effectiveChannel = features.allowedChannels.includes(deliveryChannel)
+      ? deliveryChannel
+      : features.allowedChannels[0];
 
     // Update user subscription
     const user = await User.findByIdAndUpdate(
@@ -132,11 +160,12 @@ const verifyPayment = async (req, res, next) => {
         subscriptionPlan: isYearly ? 'yearly' : 'monthly',
         subscriptionStartDate: new Date(),
         subscriptionExpiry: new Date(Date.now() + durationMs),
+        deliveryChannel: effectiveChannel,
         razorpayPaymentId: razorpay_payment_id,
         amountPaid: payment.amount
       },
       { new: true }
-    ).select('name email subscriptionStatus subscriptionExpiry');
+    ).select('name email subscriptionStatus subscriptionExpiry deliveryChannel');
 
     res.status(200).json({
       success: true,
@@ -150,7 +179,8 @@ const verifyPayment = async (req, res, next) => {
         },
         subscription: {
           status: user.subscriptionStatus,
-          expiresAt: user.subscriptionExpiry
+          expiresAt: user.subscriptionExpiry,
+          deliveryChannel: user.deliveryChannel
         }
       }
     });
@@ -185,14 +215,16 @@ const getPlans = async (req, res, next) => {
     const plans = [
       {
         id: 'free',
-        name: 'Free',
+        name: 'Free Trial',
         price: 0,
         billingCycle: null,
+        trialDays: 3,
+        deliveryChannels: ['email'],
         features: [
-          'Daily verse via WhatsApp (manual interaction required)',
-          'Must send ANY message to get today\'s verse',
-          'No auto-delivery guarantee',
-          'Email summary once/week'
+          '3-day free trial',
+          'Daily verse via Email',
+          'Text-only (no audio)',
+          'Email delivery only'
         ]
       },
       {
@@ -200,25 +232,26 @@ const getPlans = async (req, res, next) => {
         name: 'Basic',
         price: PRICING.basic_monthly,
         billingCycle: 'monthly',
+        deliveryChannels: ['email'],
         features: [
-          'AUTO-DELIVERY guaranteed at chosen time',
-          'Daily verse via WhatsApp (no action needed)',
-          'Daily email with beautiful HTML template',
-          'Weekend reflection questions',
-          'Streak counter & gamification'
+          'Daily verse via Email',
+          'Auto-delivery at chosen time',
+          'Beautiful HTML email template',
+          'Email delivery only',
+          'No audio'
         ]
       },
       {
-        id: 'basic_yearly',
-        name: 'Basic',
-        price: PRICING.basic_yearly,
-        billingCycle: 'yearly',
-        savings: `Save ₹${PRICING.basic_monthly * 12 - PRICING.basic_yearly}`,
+        id: 'standard_monthly',
+        name: 'Standard',
+        price: PRICING.standard_monthly,
+        billingCycle: 'monthly',
+        deliveryChannels: ['email', 'whatsapp'],
         features: [
-          'AUTO-DELIVERY guaranteed at chosen time',
-          'Daily verse via WhatsApp (no action needed)',
-          'Daily email with beautiful HTML template',
-          'Weekend reflection questions',
+          'Choose WhatsApp OR Email delivery',
+          'Auto-delivery at chosen time',
+          'Daily audio explanation included',
+          'Beautiful HTML email or WhatsApp messages',
           'Streak counter & gamification'
         ]
       },
@@ -227,28 +260,31 @@ const getPlans = async (req, res, next) => {
         name: 'Premium',
         price: PRICING.premium_monthly,
         billingCycle: 'monthly',
+        deliveryChannels: ['email', 'whatsapp'],
         features: [
-          'Everything in Basic',
-          'Daily audio explanation (60-90 sec)',
+          'Everything in Standard',
+          'Choose WhatsApp OR Email delivery',
+          'Daily audio explanation included',
           'Chapter-wise deep dives (weekly)',
           'PDF downloads of full chapters',
-          'Ad-free experience',
           'Priority support'
         ]
       },
       {
         id: 'premium_yearly',
-        name: 'Premium',
+        name: 'Premium Yearly',
         price: PRICING.premium_yearly,
         billingCycle: 'yearly',
+        deliveryChannels: ['email', 'whatsapp'],
         savings: `Save ₹${PRICING.premium_monthly * 12 - PRICING.premium_yearly}`,
         features: [
-          'Everything in Basic',
-          'Daily audio explanation (60-90 sec)',
+          'Everything in Premium Monthly',
+          'Choose WhatsApp OR Email delivery',
+          'Daily audio explanation included',
           'Chapter-wise deep dives (weekly)',
           'PDF downloads of full chapters',
-          'Ad-free experience',
-          'Priority support'
+          'Priority support',
+          'Best value — yearly pricing'
         ]
       }
     ];

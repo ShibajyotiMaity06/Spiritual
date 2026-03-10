@@ -3,3 +3,9 @@ env
 node_modules/
 dist/
 build/
+audio/
+gita_dataset_v3.json
+prd.txt
+remove_audio.js
+subscriptions.json
+yedo.js
