@@ -8,11 +8,13 @@ const path = require('path');
 const crypto = require('crypto');
 const User = require('../models/User');
 const { sendVerseEmail } = require('../services/emailService');
-const { getVerseByIndex, loadDataset } = require('../services/schedulerService');
-const { formatEmailHTML, formatEmailSubject } = require('../services/messageFormatter');
+const { getVerseByIndex, getQuranVersesByIndex, loadDataset, loadQuranDataset } = require('../services/schedulerService');
+const { formatEmailHTML, formatEmailSubject, formatQuranEmailHTML, formatQuranEmailSubject } = require('../services/messageFormatter');
 
 // Path to the manual subscriptions file (outside backend & frontend)
 const SUBSCRIPTIONS_FILE = path.join(__dirname, '..', '..', 'subscriptions.json');
+// Path to the manual payments file (outside backend & frontend)
+const PAYMENTS_FILE = path.join(__dirname, '..', '..', 'payments.json');
 
 // Generate unique referral code
 const generateReferralCode = (name) => {
@@ -36,7 +38,8 @@ const subscribe = async (req, res, next) => {
             preferredTime,
             deliveryChannel,
             whatsappNumber,
-            planId
+            planId,
+            paidByName
         } = req.body;
 
         // ── Validate required fields ──
@@ -69,18 +72,34 @@ const subscribe = async (req, res, next) => {
         // ── Determine plan-specific settings ──
         let subscriptionStatus, trialExpiry, subscriptionExpiry;
 
+        const PLAN_MAP = {
+            'free': { status: 'trial', durationDays: 3 },
+            'basic_monthly': { status: 'paid_basic', durationDays: 30 },
+            'standard_monthly': { status: 'paid_standard', durationDays: 30 },
+            'premium_monthly': { status: 'paid_premium', durationDays: 30 },
+            'premium_yearly': { status: 'paid_premium', durationDays: 365 },
+        };
+
+        const planConfig = PLAN_MAP[planId];
+        if (!planConfig) {
+            return res.status(400).json({ success: false, message: 'Invalid plan selected.' });
+        }
+
+        subscriptionStatus = planConfig.status;
+        const isPaid = planId !== 'free';
+        const isPendingPayment = isPaid; // all paid plans need manual verification
+
         if (planId === 'free') {
-            subscriptionStatus = 'trial';
-            trialExpiry = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000); // 3 days
-        } else if (planId === 'basic_monthly') {
-            subscriptionStatus = 'paid_basic';
-            subscriptionExpiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+            trialExpiry = new Date(now.getTime() + planConfig.durationDays * 24 * 60 * 60 * 1000);
         } else {
-            // For standard, premium, yearly — we'll add payment later
-            return res.status(400).json({
-                success: false,
-                message: 'Payment integration for this plan is coming soon. Please choose Free Trial or Basic for now.'
-            });
+            // For paid plans, set status to 'pending' initially — admin activates after payment check
+            // We still create the user in DB but mark them as NOT active until verified
+            subscriptionExpiry = new Date(now.getTime() + planConfig.durationDays * 24 * 60 * 60 * 1000);
+        }
+
+        // Paid plans require paidByName
+        if (isPaid && (!paidByName || !paidByName.trim())) {
+            return res.status(400).json({ success: false, message: 'Please provide the name shown on your UPI payment.' });
         }
 
         // ── Create or update user ──
@@ -90,15 +109,16 @@ const subscribe = async (req, res, next) => {
             // Re-activate expired user
             existingUser.name = name.trim();
             existingUser.religion = religion;
+            existingUser.book = book;
             existingUser.language = language;
-            existingUser.preferredTime = planId === 'free' || planId === 'basic_monthly' ? 7 : (preferredTime || 7);
-            existingUser.deliveryChannel = 'email'; // Free & basic = email only
+            existingUser.preferredTime = (planId === 'free' || planId === 'basic_monthly') ? 7 : (preferredTime || 7);
+            existingUser.deliveryChannel = (planId === 'free' || planId === 'basic_monthly') ? 'email' : (deliveryChannel || 'email');
             existingUser.subscriptionStatus = subscriptionStatus;
             existingUser.trialStartDate = planId === 'free' ? now : null;
             existingUser.trialExpiry = planId === 'free' ? trialExpiry : null;
-            existingUser.subscriptionStartDate = planId === 'basic_monthly' ? now : null;
-            existingUser.subscriptionExpiry = planId === 'basic_monthly' ? subscriptionExpiry : null;
-            existingUser.isActive = true;
+            existingUser.subscriptionStartDate = isPaid ? now : null;
+            existingUser.subscriptionExpiry = isPaid ? subscriptionExpiry : null;
+            existingUser.isActive = planId === 'free'; // paid = inactive until verified
             existingUser.currentVerseIndex = 0; // Reset progress
             await existingUser.save();
             user = existingUser;
@@ -108,9 +128,10 @@ const subscribe = async (req, res, next) => {
                 email: email.toLowerCase().trim(),
                 ...(whatsappNumber ? { whatsappNumber } : {}),
                 religion,
+                book,
                 language,
-                preferredTime: planId === 'free' || planId === 'basic_monthly' ? 7 : (preferredTime || 7),
-                deliveryChannel: 'email',
+                preferredTime: (planId === 'free' || planId === 'basic_monthly') ? 7 : (preferredTime || 7),
+                deliveryChannel: (planId === 'free' || planId === 'basic_monthly') ? 'email' : (deliveryChannel || 'email'),
                 isWhatsappOptedIn: false,
                 isEmailOptedIn: true,
                 signupSource: 'organic',
@@ -118,30 +139,47 @@ const subscribe = async (req, res, next) => {
                 subscriptionStatus,
                 trialStartDate: planId === 'free' ? now : null,
                 trialExpiry: planId === 'free' ? trialExpiry : null,
-                subscriptionStartDate: planId === 'basic_monthly' ? now : null,
-                subscriptionExpiry: planId === 'basic_monthly' ? subscriptionExpiry : null,
+                subscriptionStartDate: isPaid ? now : null,
+                subscriptionExpiry: isPaid ? subscriptionExpiry : null,
+                isActive: planId === 'free', // paid = inactive until verified
             });
         }
 
         // ── Plan-specific actions ──
 
         if (planId === 'free') {
-            // FREE TRIAL: Send first verse immediately via Resend
+            // FREE TRIAL: Send first verse(s) immediately via Resend
             try {
-                const verse = getVerseByIndex(0);
-                if (verse) {
-                    const subject = formatEmailSubject(verse);
-                    const html = formatEmailHTML(verse, user);
+                let subject, html, advanceBy = 1;
+
+                if (book === 'quran') {
+                    // Quran: send first pair of verses
+                    const quranPair = getQuranVersesByIndex(0);
+                    if (quranPair) {
+                        subject = formatQuranEmailSubject(quranPair.verses);
+                        html = formatQuranEmailHTML(quranPair.verses, user);
+                        advanceBy = quranPair.advanceBy;
+                    }
+                } else {
+                    // Gita (default): send first verse
+                    const verse = getVerseByIndex(0);
+                    if (verse) {
+                        subject = formatEmailSubject(verse);
+                        html = formatEmailHTML(verse, user);
+                    }
+                }
+
+                if (subject && html) {
                     const emailResult = await sendVerseEmail(user.email, subject, html);
 
                     if (emailResult.success) {
                         // Update user progress
                         await User.findByIdAndUpdate(user._id, {
-                            $inc: { currentVerseIndex: 1, totalVersesReceived: 1 },
+                            $inc: { currentVerseIndex: advanceBy, totalVersesReceived: advanceBy },
                             lastVerseDeliveredAt: new Date(),
                             lastActivityAt: new Date()
                         });
-                        console.log(`✅ Free trial: First verse sent to ${user.email}`);
+                        console.log(`✅ Free trial: First ${book} verse(s) sent to ${user.email}`);
                     } else {
                         console.error(`⚠️ Free trial: Failed to send first verse to ${user.email}:`, emailResult.error);
                     }
@@ -152,43 +190,78 @@ const subscribe = async (req, res, next) => {
             }
         }
 
-        if (planId === 'basic_monthly') {
-            // BASIC ₹49: Append to subscriptions.json for manual email sending
+        if (isPaid) {
+            // ALL PAID PLANS: Log payment to payments.json for manual verification
+            const PRICE_MAP = {
+                'basic_monthly': '₹49/mo',
+                'standard_monthly': '₹99/mo',
+                'premium_monthly': '₹149/mo',
+                'premium_yearly': '₹1,599/yr',
+            };
+
             try {
-                let fileData = { subscribers: [] };
+                let fileData = { payments: [] };
                 try {
-                    const raw = fs.readFileSync(SUBSCRIPTIONS_FILE, 'utf-8');
-                    fileData = JSON.parse(raw);
+                    const raw = fs.readFileSync(PAYMENTS_FILE, 'utf-8');
+                    if (raw.trim()) fileData = JSON.parse(raw);
                 } catch (e) {
-                    // File doesn't exist or invalid, create fresh
+                    // File doesn't exist or empty/invalid
                 }
 
-                // Check if already in list
-                const alreadyInList = fileData.subscribers.some(
+                fileData.payments.push({
+                    userId: user._id.toString(),
+                    name: user.name,
+                    email: user.email,
+                    paidByName: paidByName.trim(),
+                    plan: planId,
+                    price: PRICE_MAP[planId] || planId,
+                    book: book,
+                    language: user.language,
+                    deliveryChannel: user.deliveryChannel,
+                    preferredTime: user.preferredTime,
+                    submittedAt: now.toISOString(),
+                    verified: false,
+                    activatedAt: null,
+                    notes: ''
+                });
+
+                fs.writeFileSync(PAYMENTS_FILE, JSON.stringify(fileData, null, 2), 'utf-8');
+                console.log(`💰 Payment logged for ${user.email} — plan: ${planId}, paidBy: ${paidByName}`);
+            } catch (fileError) {
+                console.error(`⚠️ Failed to write to payments.json:`, fileError.message);
+            }
+
+            // Also add to subscriptions.json for tracking
+            try {
+                let subData = { subscribers: [] };
+                try {
+                    const raw = fs.readFileSync(SUBSCRIPTIONS_FILE, 'utf-8');
+                    subData = JSON.parse(raw);
+                } catch (e) {}
+
+                const alreadyInList = subData.subscribers.some(
                     s => s.email.toLowerCase() === user.email.toLowerCase()
                 );
 
                 if (!alreadyInList) {
-                    fileData.subscribers.push({
+                    subData.subscribers.push({
                         name: user.name,
                         email: user.email,
                         book: book,
                         language: user.language,
                         religion: user.religion,
-                        plan: 'basic_monthly',
-                        price: '₹49/mo',
+                        plan: planId,
+                        price: PRICE_MAP[planId] || planId,
                         subscribedAt: now.toISOString(),
-                        status: 'active',
+                        status: 'pending_payment_verification',
                         nextVerseIndex: 0,
                         notes: ''
                     });
 
-                    fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(fileData, null, 2), 'utf-8');
-                    console.log(`📝 Basic subscriber added to file: ${user.email}`);
+                    fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(subData, null, 2), 'utf-8');
                 }
             } catch (fileError) {
                 console.error(`⚠️ Failed to write to subscriptions.json:`, fileError.message);
-                // Don't fail — user is still in DB
             }
         }
 
@@ -197,7 +270,7 @@ const subscribe = async (req, res, next) => {
             success: true,
             message: planId === 'free'
                 ? '🙏 Your 3-day free trial has started! Check your email for your first verse.'
-                : '🙏 Thank you for subscribing! You will start receiving daily verses at 7:00 AM via email.',
+                : '🙏 Payment submitted! We will verify and activate your subscription within 4 hours.',
             data: {
                 user: {
                     id: user._id,

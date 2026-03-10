@@ -16,6 +16,11 @@ const userSchema = new mongoose.Schema({
     enum: ['hindu', 'muslim', 'christian'],
     required: true
   },
+  book: {
+    type: String,
+    enum: ['bhagavad_gita', 'quran', 'bible'],
+    default: 'bhagavad_gita'
+  },
   language: {
     type: String,
     enum: ['hindi', 'english', 'tamil', 'telugu', 'malayalam', 'kannada', 'urdu', 'bengali'],

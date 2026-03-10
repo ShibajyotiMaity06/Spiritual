@@ -1,0 +1,21 @@
+{
+  "description": "Payment claims from paid plan subscribers. Verify UPI transactions and set verified=true, then activate user in MongoDB (isActive=true). Created automatically by subscribe API.",
+  "payments": [
+    {
+      "userId": "69b017d8f626b23141858b2f",
+      "name": "Parbati Maity",
+      "email": "debajyoti.maity29@gmail.com",
+      "paidByName": "PARBATI MAITY",
+      "plan": "basic_monthly",
+      "price": "₹49/mo",
+      "book": "bhagavad_gita",
+      "language": "hindi",
+      "deliveryChannel": "email",
+      "preferredTime": 7,
+      "submittedAt": "2026-03-10T13:08:40.306Z",
+      "verified": true,
+      "activatedAt": "2026-03-10T13:16:06.434Z",
+      "notes": "Manually activated via script"
+    }
+  ]
+}

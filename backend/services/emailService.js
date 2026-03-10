@@ -36,7 +36,11 @@ async function sendVerseEmail(toEmail, subject, htmlContent) {
         };
     }
 
-    const fromEmail = process.env.FROM_EMAIL || 'DailyFaith <noreply@dailyfaith.in>';
+    const rawFrom = process.env.FROM_EMAIL || 'noreply@spiritmsg.in';
+    // Ensure proper "Name <email>" format for Resend
+    const fromEmail = rawFrom.includes('<') ? rawFrom : `DailyFaith <${rawFrom}>`;
+
+    console.log(`📧 Sending email from: ${fromEmail} → to: ${toEmail}`);
 
     try {
         const { data, error } = await client.emails.send({
