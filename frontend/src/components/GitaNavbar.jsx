@@ -17,9 +17,6 @@ export default function GitaNavbar() {
                     </div>
 
                     <div className="hidden md:flex items-center space-x-8">
-                        <Link to="/gita/wisdom" className="text-gray-800 hover:text-brand-saffron font-medium uppercase tracking-wider text-sm transition-colors">Wisdom</Link>
-                        <Link to="/gita/features" className="text-gray-800 hover:text-brand-saffron font-medium uppercase tracking-wider text-sm transition-colors">Features</Link>
-                        <Link to="/gita/community" className="text-gray-800 hover:text-brand-saffron font-medium uppercase tracking-wider text-sm transition-colors">Community</Link>
                         <Link to="#pricing" className="px-8 py-3 rounded-full bg-[#2A231C] text-white hover:bg-black transition-all font-medium text-sm">Subscribe</Link>
                     </div>
 
@@ -33,9 +30,6 @@ export default function GitaNavbar() {
 
             {isOpen && (
                 <div className="md:hidden bg-[#FFF9F5] border-b border-gray-200 px-4 pt-2 pb-6 space-y-2 shadow-xl absolute w-full">
-                    <Link to="/gita/wisdom" className="block px-4 py-3 text-base font-medium text-gray-800 hover:text-brand-saffron hover:bg-orange-50 rounded-lg">Wisdom</Link>
-                    <Link to="/gita/features" className="block px-4 py-3 text-base font-medium text-gray-800 hover:text-brand-saffron hover:bg-orange-50 rounded-lg">Features</Link>
-                    <Link to="/gita/community" className="block px-4 py-3 text-base font-medium text-gray-800 hover:text-brand-saffron hover:bg-orange-50 rounded-lg">Community</Link>
                     <div className="pt-4">
                         <Link to="#pricing" className="block w-full text-center px-6 py-3 rounded-xl bg-[#2A231C] text-white hover:bg-black font-medium">Subscribe</Link>
                     </div>

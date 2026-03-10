@@ -17,9 +17,6 @@ export default function QuranNavbar() {
                     </div>
 
                     <div className="hidden md:flex items-center space-x-8">
-                        <Link to="/quran/wisdom" className="text-gray-800 hover:text-brand-green font-medium uppercase tracking-wider text-sm transition-colors">Wisdom</Link>
-                        <Link to="/quran/features" className="text-gray-800 hover:text-brand-green font-medium uppercase tracking-wider text-sm transition-colors">Features</Link>
-                        <Link to="/quran/community" className="text-gray-800 hover:text-brand-green font-medium uppercase tracking-wider text-sm transition-colors">Community</Link>
                         <Link to="#pricing" className="px-8 py-3 rounded-full bg-[#1A2520] text-white hover:bg-black transition-all font-medium text-sm">Subscribe</Link>
                     </div>
 
@@ -32,10 +29,7 @@ export default function QuranNavbar() {
             </div>
 
             {isOpen && (
-                <div className="md:hidden bg-[#F4FDF8] border-b border-gray-200 px-4 pt-2 pb-6 space-y-2 shadow-xl absolute w-full">
-                    <Link to="/quran/wisdom" className="block px-4 py-3 text-base font-medium text-gray-800 hover:text-brand-green hover:bg-green-50 rounded-lg">Wisdom</Link>
-                    <Link to="/quran/features" className="block px-4 py-3 text-base font-medium text-gray-800 hover:text-brand-green hover:bg-green-50 rounded-lg">Features</Link>
-                    <Link to="/quran/community" className="block px-4 py-3 text-base font-medium text-gray-800 hover:text-brand-green hover:bg-green-50 rounded-lg">Community</Link>
+                <div className="md:hidden bg-[#F4FDF8] border-b border-gray-200 px-4 pt-2 pb-6 shadow-xl absolute w-full">
                     <div className="pt-4">
                         <Link to="#pricing" className="block w-full text-center px-6 py-3 rounded-xl bg-[#1A2520] text-white hover:bg-black font-medium">Subscribe</Link>
                     </div>

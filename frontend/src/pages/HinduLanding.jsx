@@ -21,56 +21,76 @@ export default function HinduLanding() {
         <div className="min-h-screen flex flex-col bg-[#FCF8F2] font-sans">
             <GitaNavbar />
 
-            <main className="flex-1 pt-24">
+            <main className="flex-1 pt-16">
                 {/* Hero Section */}
-                <section className="relative pt-20 pb-20 text-center px-4 sm:px-6 lg:px-8">
-                    <div className="max-w-4xl mx-auto space-y-6">
-                        <h4 className="text-brand-saffron font-bold tracking-[0.2em] text-sm uppercase">
-                            Ancient Wisdom • Modern Life
-                        </h4>
+                <section className="relative pt-12 pb-20 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                            <div className="text-center lg:text-left space-y-6">
+                                <h4 className="text-brand-saffron font-bold tracking-[0.2em] text-sm uppercase">
+                                    Ancient Wisdom • Modern Life
+                                </h4>
 
-                        <h1 className="text-5xl md:text-7xl font-serif font-black text-[#2A231C] leading-[1.1] tracking-tight">
-                            Daily <span className="text-[#C69C6D]">Bhagavad Gita</span><br />
-                            In Your Language
-                        </h1>
+                                <h1 className="text-5xl md:text-7xl font-serif font-black text-[#2A231C] leading-[1.1] tracking-tight">
+                                    Daily <span className="text-[#C69C6D]">Bhagavad Gita</span><br />
+                                    In Your Language
+                                </h1>
 
-                        <p className="mt-6 text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                            Embark on a spiritual journey with the timeless teachings of Lord Krishna, delivered to your screen daily in exquisite aesthetic cards.
-                        </p>
+                                <p className="mt-6 text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                                    Embark on a spiritual journey with the timeless teachings of Lord Krishna, delivered to your screen daily in exquisite aesthetic cards.
+                                </p>
 
-                        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 bg-white p-2 rounded-2xl shadow-lg border border-orange-100 max-w-md mx-auto relative">
-
-                            <div className="relative w-full sm:w-auto">
-                                <button
-                                    onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                                    className="flex items-center justify-between w-full sm:w-40 px-4 py-3 text-[#2A231C] font-medium bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
-                                >
-                                    {selectedLang}
-                                    <ChevronDown size={18} className="text-gray-400" />
-                                </button>
-
-                                {langDropdownOpen && (
-                                    <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                                        {languages.map(lang => (
+                                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                                    <div className="bg-white p-2 rounded-2xl shadow-lg border border-orange-100 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                                        <div className="relative w-full sm:w-auto">
                                             <button
-                                                key={lang}
-                                                onClick={() => { setSelectedLang(lang); setLangDropdownOpen(false); }}
-                                                className="w-full text-left px-4 py-2 hover:bg-orange-50 text-[#2A231C] transition-colors"
+                                                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                                                className="flex items-center justify-between w-full sm:w-40 px-4 py-3 text-[#2A231C] font-medium bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
                                             >
-                                                {lang}
+                                                {selectedLang}
+                                                <ChevronDown size={18} className="text-gray-400" />
                                             </button>
-                                        ))}
+
+                                            {langDropdownOpen && (
+                                                <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                                                    {languages.map(lang => (
+                                                        <button
+                                                            key={lang}
+                                                            onClick={() => { setSelectedLang(lang); setLangDropdownOpen(false); }}
+                                                            className="w-full text-left px-4 py-2 hover:bg-orange-50 text-[#2A231C] transition-colors"
+                                                        >
+                                                            {lang}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#F39C12] to-[#E67E22] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity">
+                                            Start Journey <ArrowRight size={18} />
+                                        </button>
                                     </div>
-                                )}
+                                </div>
                             </div>
 
-                            <button className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#F39C12] to-[#E67E22] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity">
-                                Start Journey <ArrowRight size={18} />
-                            </button>
-
+                            <div className="relative mt-12 lg:mt-0 flex justify-center lg:justify-end">
+                                <div className="bg-[#FFFDF9] p-4 md:p-6 rounded-[2rem] border border-orange-100 shadow-2xl relative w-full max-w-[480px]">
+                                    <img src="/gita-landing.jpg" alt="Example Daily Gita Verse" className="w-full h-auto rounded-xl shadow-sm" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
+
+                {/* Inherit generic PricingSection */}
+                <div className="bg-[#FCF8F2]">
+                    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                        <h2 className="text-3xl font-serif font-bold text-center text-[#2A231C] mb-8">Choose Your Plan</h2>
+                    </div>
+                    <PricingSection autoBook="bhagavad_gita" />
+                </div>
+
+
 
                 {/* Verse Showcase */}
                 <section className="py-24 bg-white border-y border-orange-100">
@@ -191,13 +211,6 @@ export default function HinduLanding() {
                     </div>
                 </section>
 
-                {/* Inherit generic PricingSection */}
-                <div className="bg-[#FCF8F2]">
-                    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                        <h2 className="text-3xl font-serif font-bold text-center text-[#2A231C] mb-8">Begin Your Practice</h2>
-                    </div>
-                    <PricingSection autoBook="bhagavad_gita" />
-                </div>
             </main>
 
             <Footer />

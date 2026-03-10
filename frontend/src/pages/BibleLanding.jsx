@@ -67,6 +67,14 @@ export default function BibleLanding() {
                     </div>
                 </section>
 
+                {/* Inherit generic PricingSection */}
+                <div className="bg-[#F4F8FD]">
+                    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                        <h2 className="text-3xl font-serif font-bold text-center text-[#1A2025] mb-8">Choose Your Plan</h2>
+                    </div>
+                    <PricingSection autoBook="bible" />
+                </div>
+
                 {/* Verse Showcase */}
                 <section className="py-24 bg-white border-y border-blue-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -153,13 +161,6 @@ export default function BibleLanding() {
                     </div>
                 </section>
 
-                {/* Inherit generic PricingSection */}
-                <div className="bg-[#F4F8FD]">
-                    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-                        <h2 className="text-3xl font-serif font-bold text-center text-[#1A2025] mb-8">Begin Your Practice</h2>
-                    </div>
-                    <PricingSection autoBook="bible" />
-                </div>
             </main>
 
             <Footer />
