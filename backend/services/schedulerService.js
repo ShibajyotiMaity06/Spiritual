@@ -11,6 +11,7 @@ const { PLAN_FEATURES } = require('../config/constants');
 const {
     formatWhatsAppMessage, formatEmailHTML, formatEmailSubject,
     formatQuranWhatsAppMessage, formatQuranEmailHTML, formatQuranEmailSubject,
+    formatBibleWhatsAppMessage, formatBibleEmailHTML, formatBibleEmailSubject,
     userGetsAudio, getAudioUrl
 } = require('./messageFormatter');
 const { sendWhatsAppMessage, sendWhatsAppAudio } = require('./whatsappService');
@@ -96,8 +97,91 @@ function getQuranVersesByIndex(index) {
 }
 
 // ─────────────────────────────────────────────────────
+// Load Bible dataset from JSON (Gospel of John, KJV)
+// Flattens chapters → verses into a single array
+// ─────────────────────────────────────────────────────
+let bibleDataset = null;
+
+function loadBibleDataset() {
+    if (bibleDataset) return bibleDataset;
+
+    const dataPath = path.join(__dirname, '..', '..', 'john-kjv-complete.json');
+    try {
+        const raw = fs.readFileSync(dataPath, 'utf-8');
+        const data = JSON.parse(raw);
+        // Flatten chapters into a single verse array
+        bibleDataset = [];
+        for (const ch of data.chapters) {
+            for (const v of ch.verses) {
+                bibleDataset.push(v);
+            }
+        }
+        console.log(`📖 Loaded Bible dataset: ${bibleDataset.length} verses (Gospel of John, KJV)`);
+        return bibleDataset;
+    } catch (error) {
+        console.error('❌ Failed to load Bible dataset:', error.message);
+        return [];
+    }
+}
+
+// ─────────────────────────────────────────────────────
+// Get Bible verse by index (1 verse per day)
+// ─────────────────────────────────────────────────────
+function getBibleVerseByIndex(index) {
+    const dataset = loadBibleDataset();
+    if (dataset.length === 0) return null;
+    return dataset[index % dataset.length];
+}
+
+// ─────────────────────────────────────────────────────
+// Load streak data for a given book
+// ─────────────────────────────────────────────────────
+let streakCache = {};
+
+function loadStreakData(book) {
+    if (streakCache[book]) return streakCache[book];
+
+    const fileMap = {
+        'bhagavad_gita': 'gita_streak.json',
+        'quran': 'quran_streak.json',
+        'bible': 'bible_streak.json'
+    };
+    const fileName = fileMap[book];
+    if (!fileName) return [];
+
+    const filePath = path.join(__dirname, '..', '..', fileName);
+    try {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        const data = JSON.parse(raw);
+        const key = Object.keys(data)[0]; // e.g. 'gita_streaks'
+        streakCache[book] = data[key] || [];
+        return streakCache[book];
+    } catch (error) {
+        console.error(`❌ Failed to load streak data for ${book}:`, error.message);
+        return [];
+    }
+}
+
+function getStreakMessage(book, dayOfMonth) {
+    const streaks = loadStreakData(book);
+    if (streaks.length === 0) return null;
+    // dayOfMonth 1-30 maps to day 1-30 in streak JSON; wrap if needed
+    const day = ((dayOfMonth - 1) % streaks.length) + 1;
+    const entry = streaks.find(s => s.day === day);
+    return entry ? { day, message: entry.message } : null;
+}
+
+// ─────────────────────────────────────────────────────
+// Check if user qualifies for streak messages (₹99+ plans)
+// ─────────────────────────────────────────────────────
+function userGetsStreak(user) {
+    return ['paid_basic', 'paid_standard', 'paid_premium'].includes(user.subscriptionStatus);
+}
+
+// ─────────────────────────────────────────────────────
 // Get the effective delivery channel for a user
-// Based on their plan and preference
+// Free & Basic = email only
+// Standard & Premium = user's chosen channel (email OR whatsapp)
 // ─────────────────────────────────────────────────────
 function getEffectiveChannel(user) {
     const features = PLAN_FEATURES[user.subscriptionStatus];
@@ -107,13 +191,13 @@ function getEffectiveChannel(user) {
 
     const preferred = user.deliveryChannel || 'email';
 
-    // If user's preferred channel is allowed by their plan, use it
-    if (features.allowedChannels.includes(preferred)) {
-        return preferred;
+    // If user chose whatsapp and their plan allows it, use whatsapp
+    if (preferred === 'whatsapp' && features.allowedChannels.includes('whatsapp') && user.whatsappNumber) {
+        return 'whatsapp';
     }
 
-    // Fallback to first allowed channel (email for basic/free/trial)
-    return features.allowedChannels[0];
+    // Otherwise email
+    return 'email';
 }
 
 // ─────────────────────────────────────────────────────
@@ -123,6 +207,7 @@ async function deliverVerseToUser(user) {
     try {
         const userBook = user.book || 'bhagavad_gita';
         const isQuran = userBook === 'quran';
+        const isBible = userBook === 'bible';
 
         // Get verse(s) based on book
         let verse, quranPair, advanceBy = 1;
@@ -134,6 +219,12 @@ async function deliverVerseToUser(user) {
                 return;
             }
             advanceBy = quranPair.advanceBy;
+        } else if (isBible) {
+            verse = getBibleVerseByIndex(user.currentVerseIndex);
+            if (!verse) {
+                console.log(`⚠️ No Bible verse found for user ${user.email} at index ${user.currentVerseIndex}`);
+                return;
+            }
         } else {
             verse = getVerseByIndex(user.currentVerseIndex);
             if (!verse) {
@@ -141,6 +232,9 @@ async function deliverVerseToUser(user) {
                 return;
             }
         }
+
+        // Get streak data for ₹99+ users
+        const streak = userGetsStreak(user) ? getStreakMessage(userBook, new Date().getDate()) : null;
 
         const channel = getEffectiveChannel(user);
         if (!channel) {
@@ -155,9 +249,11 @@ async function deliverVerseToUser(user) {
         if (channel === 'whatsapp' && user.whatsappNumber) {
             let whatsappText;
             if (isQuran) {
-                whatsappText = formatQuranWhatsAppMessage(quranPair.verses, user);
+                whatsappText = formatQuranWhatsAppMessage(quranPair.verses, user, streak);
+            } else if (isBible) {
+                whatsappText = formatBibleWhatsAppMessage(verse, user, streak);
             } else {
-                whatsappText = formatWhatsAppMessage(verse, user);
+                whatsappText = formatWhatsAppMessage(verse, user, streak);
             }
             results.whatsapp = await sendWhatsAppMessage(user.whatsappNumber, whatsappText);
 
@@ -172,21 +268,23 @@ async function deliverVerseToUser(user) {
                 timestamp: new Date()
             });
 
-            // Send audio separately if eligible
-            if (includeAudio && !isQuran) {
+            // Send audio separately if eligible (Bible has no audio)
+            if (includeAudio && !isQuran && !isBible) {
                 const audioUrl = getAudioUrl(verse.id, user.language);
                 await sendWhatsAppAudio(user.whatsappNumber, audioUrl);
             }
-            // Quran audio is embedded in the message/email via external URL
         } else {
             // Send email
             let subject, html;
             if (isQuran) {
                 subject = formatQuranEmailSubject(quranPair.verses);
-                html = formatQuranEmailHTML(quranPair.verses, user);
+                html = formatQuranEmailHTML(quranPair.verses, user, streak);
+            } else if (isBible) {
+                subject = formatBibleEmailSubject(verse);
+                html = formatBibleEmailHTML(verse, user, streak);
             } else {
                 subject = formatEmailSubject(verse);
-                html = formatEmailHTML(verse, user);
+                html = formatEmailHTML(verse, user, streak);
             }
             results.email = await sendVerseEmail(user.email, subject, html);
 
@@ -216,19 +314,14 @@ async function deliverVerseToUser(user) {
 
         await User.findByIdAndUpdate(user._id, updateQuery);
 
+        const ok = channel === 'whatsapp' ? results.whatsapp?.success : results.email?.success;
         if (isQuran) {
             const vIds = quranPair.verses.map(v => `${v.surah}:${v.verse}`).join(', ');
-            console.log(
-                `📨 Delivered Quran ${vIds} to ${user.name} ` +
-                `via ${channel.toUpperCase()} ` +
-                `(${channel === 'whatsapp' ? (results.whatsapp?.success ? '✅' : '❌') : (results.email?.success ? '✅' : '❌')})`
-            );
+            console.log(`📨 Delivered Quran ${vIds} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
+        } else if (isBible) {
+            console.log(`📨 Delivered John ${verse.chapter}:${verse.verse} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
         } else {
-            console.log(
-                `📨 Delivered Ch.${verse.chapter}:${verse.verse} to ${user.name} ` +
-                `via ${channel.toUpperCase()} ` +
-                `(${channel === 'whatsapp' ? (results.whatsapp?.success ? '✅' : '❌') : (results.email?.success ? '✅' : '❌')})`
-            );
+            console.log(`📨 Delivered Gita Ch.${verse.chapter}:${verse.verse} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
         }
 
         return results;
@@ -293,12 +386,14 @@ async function processScheduledDeliveries() {
         await expireSubscriptions();
 
         // Get current IST hour
+        // Cron runs in Asia/Kolkata timezone, so we just need the IST hour directly
         const now = new Date();
-        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+        // Convert UTC to IST properly: IST = UTC + 5:30
+        const istOffset = 5.5 * 60 * 60 * 1000;
         const istTime = new Date(now.getTime() + istOffset);
         const currentHour = istTime.getUTCHours();
 
-        console.log(`\n⏰ Running scheduled delivery check at IST hour: ${currentHour}:00`);
+        console.log(`\n⏰ Running scheduled delivery check — UTC: ${now.getUTCHours()}:00, IST hour: ${currentHour}:00`);
 
         // Find all active users whose preferred time matches current hour
         // Include: trial (with valid expiry), paid_basic, paid_standard, paid_premium
@@ -379,7 +474,11 @@ module.exports = {
     processScheduledDeliveries,
     getVerseByIndex,
     getQuranVersesByIndex,
+    getBibleVerseByIndex,
     loadDataset,
     loadQuranDataset,
-    getEffectiveChannel
+    loadBibleDataset,
+    getEffectiveChannel,
+    getStreakMessage,
+    userGetsStreak
 };

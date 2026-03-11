@@ -65,7 +65,7 @@ const plans = [
         features: [
             'Everything in Standard',
             'Chapter-wise deep dives',
-            'PDF downloads',
+            'Daily life application',
             'Priority support'
         ],
         buttonText: 'Subscribe Premium',
@@ -140,11 +140,11 @@ export default function PricingSection({ autoBook }) {
                                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-600">
                                         📧 {plan.deliveryChannel}
                                     </span>
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${plan.audio
+                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium ${(plan.audio && autoBook !== 'bible')
                                         ? 'bg-green-100 text-green-700'
                                         : 'bg-gray-100 text-gray-400'
                                         }`}>
-                                        {plan.audio ? '🔊 Audio' : '🔇 No Audio'}
+                                        {(plan.audio && autoBook !== 'bible') ? '🔊 Audio' : '🔇 No Audio'}
                                     </span>
                                 </div>
 

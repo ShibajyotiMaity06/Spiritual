@@ -95,9 +95,7 @@ const userSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-// Indexes for performance
-userSchema.index({ email: 1 });
-userSchema.index({ whatsappNumber: 1 }, { sparse: true });
+// Indexes for performance (email & whatsappNumber already indexed via unique/sparse in schema)
 userSchema.index({ subscriptionStatus: 1 });
 userSchema.index({ religion: 1, language: 1 });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Clock, Mail, MessageCircle, Loader2, CheckCircle, QrCode, IndianRupee } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const books = [
     { id: 'bhagavad_gita', label: 'Bhagavad Gita', religion: 'hindu', icon: '🙏', color: 'border-orange-300 bg-orange-50' },
@@ -59,8 +59,8 @@ export default function SubscribeModal({ isOpen, onClose, plan, autoBook }) {
             // If book is auto-selected, skip to step 2
             if (autoBook) {
                 setStep(2);
-                // Quran only has English translations
-                if (autoBook === 'quran') setSelectedLang('english');
+                // Quran & Bible only have English translations
+                if (autoBook === 'quran' || autoBook === 'bible') setSelectedLang('english');
             }
         }
     }, [isOpen, autoBook]);
@@ -171,24 +171,18 @@ export default function SubscribeModal({ isOpen, onClose, plan, autoBook }) {
                         key={book.id}
                         onClick={() => {
                             setSelectedBook(book.id);
-                            if (book.id === 'quran') setSelectedLang('english');
+                            if (book.id === 'quran' || book.id === 'bible') setSelectedLang('english');
                             else setSelectedLang('hindi');
                             setStep(2);
                         }}
-                        disabled={book.id === 'bible'}
                         className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${selectedBook === book.id
                             ? 'border-brand-saffron bg-orange-50 shadow-sm'
-                            : book.id !== 'bible'
-                                ? 'border-gray-200 hover:border-gray-300 bg-white'
-                                : 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
                             }`}
                     >
                         <span className="text-3xl">{book.icon}</span>
                         <div>
                             <span className="font-semibold text-gray-900">{book.label}</span>
-                            {book.id === 'bible' && (
-                                <p className="text-xs text-gray-400 mt-0.5">Coming soon</p>
-                            )}
                         </div>
                     </button>
                 ))}
@@ -238,12 +232,18 @@ export default function SubscribeModal({ isOpen, onClose, plan, autoBook }) {
             {/* Language */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {selectedBook === 'quran' ? 'Translation Language' : 'Meaning Language'}
+                    {selectedBook === 'quran' ? 'Translation Language' : selectedBook === 'bible' ? 'Language' : 'Meaning Language'}
                 </label>
                 {selectedBook === 'quran' ? (
                     <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-50 border border-green-200">
                         <span className="text-sm text-green-700">
                             Verses in <strong>Arabic</strong> with <strong>English</strong> translation
+                        </span>
+                    </div>
+                ) : selectedBook === 'bible' ? (
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200">
+                        <span className="text-sm text-blue-700">
+                            Gospel of John — <strong>English</strong> (King James Version)
                         </span>
                     </div>
                 ) : (
@@ -466,7 +466,9 @@ export default function SubscribeModal({ isOpen, onClose, plan, autoBook }) {
     );
 
     // Success Screen
-    const renderSuccess = () => (
+    const renderSuccess = () => {
+        const chosenChannel = (canChooseChannel && deliveryChannel === 'whatsapp') ? 'WhatsApp' : 'Email';
+        return (
         <div className="text-center py-6 space-y-4">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                 <CheckCircle size={32} className="text-green-600" />
@@ -477,7 +479,7 @@ export default function SubscribeModal({ isOpen, onClose, plan, autoBook }) {
             <p className="text-gray-500 max-w-sm mx-auto">
                 {isFree
                     ? 'Your 3-day free trial has started. Check your email — your first verse is on its way!'
-                    : 'Thank you! We will verify your payment and activate your subscription within 4 hours. You will receive a confirmation email once activated.'
+                    : `Thank you! We will verify your payment and activate your subscription within 4 hours. You will receive your first verse on ${chosenChannel} once activated.`
                 }
             </p>
             {!isFree && (
@@ -492,7 +494,8 @@ export default function SubscribeModal({ isOpen, onClose, plan, autoBook }) {
                 Got it!
             </button>
         </div>
-    );
+        );
+    };
 
     // Render based on step
     const renderContent = () => {

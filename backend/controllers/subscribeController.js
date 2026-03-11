@@ -8,8 +8,8 @@ const path = require('path');
 const crypto = require('crypto');
 const User = require('../models/User');
 const { sendVerseEmail } = require('../services/emailService');
-const { getVerseByIndex, getQuranVersesByIndex, loadDataset, loadQuranDataset } = require('../services/schedulerService');
-const { formatEmailHTML, formatEmailSubject, formatQuranEmailHTML, formatQuranEmailSubject } = require('../services/messageFormatter');
+const { getVerseByIndex, getQuranVersesByIndex, getBibleVerseByIndex, loadDataset, loadQuranDataset, loadBibleDataset } = require('../services/schedulerService');
+const { formatEmailHTML, formatEmailSubject, formatQuranEmailHTML, formatQuranEmailSubject, formatBibleEmailHTML, formatBibleEmailSubject } = require('../services/messageFormatter');
 
 // Path to the manual subscriptions file (outside backend & frontend)
 const SUBSCRIPTIONS_FILE = path.join(__dirname, '..', '..', 'subscriptions.json');
@@ -160,6 +160,13 @@ const subscribe = async (req, res, next) => {
                         html = formatQuranEmailHTML(quranPair.verses, user);
                         advanceBy = quranPair.advanceBy;
                     }
+                } else if (book === 'bible') {
+                    // Bible: send first verse (Gospel of John, KJV)
+                    const verse = getBibleVerseByIndex(0);
+                    if (verse) {
+                        subject = formatBibleEmailSubject(verse);
+                        html = formatBibleEmailHTML(verse, user, null);
+                    }
                 } else {
                     // Gita (default): send first verse
                     const verse = getVerseByIndex(0);
@@ -212,6 +219,7 @@ const subscribe = async (req, res, next) => {
                     userId: user._id.toString(),
                     name: user.name,
                     email: user.email,
+                    whatsappNumber: user.whatsappNumber || null,
                     paidByName: paidByName.trim(),
                     plan: planId,
                     price: PRICE_MAP[planId] || planId,

@@ -15,7 +15,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="hidden md:flex items-center space-x-8">
-                        <Link to="/signin" className="px-6 py-2 rounded-full border border-gray-200 text-brand-dark hover:border-gray-300 hover:bg-gray-50 transition-all font-medium">Sign In</Link>
+                        <a href="#pricing" className="px-6 py-2 rounded-full border border-gray-200 text-brand-dark hover:border-gray-300 hover:bg-gray-50 transition-all font-medium">Subscribe</a>
                     </div>
 
                     <div className="md:hidden flex items-center">
@@ -30,7 +30,7 @@ export default function Navbar() {
             {isOpen && (
                 <div className="md:hidden bg-white border-b border-gray-100 px-4 pt-2 pb-4 space-y-1 shadow-lg absolute w-full">
                     <div className="pt-2">
-                        <Link to="/signin" className="block w-full text-center px-6 py-2 rounded-lg border border-gray-200 text-brand-dark hover:bg-gray-50 font-medium">Sign In</Link>
+                        <a href="#pricing" className="block w-full text-center px-6 py-2 rounded-lg border border-gray-200 text-brand-dark hover:bg-gray-50 font-medium">Subscribe</a>
                     </div>
                 </div>
             )}
