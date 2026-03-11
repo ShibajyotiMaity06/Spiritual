@@ -71,6 +71,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Keep-alive endpoint for cron-job.org pings
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
 // ───────────────── API Routes ─────────────────
 
 app.use('/api/auth', require('./routes/authRoutes'));
