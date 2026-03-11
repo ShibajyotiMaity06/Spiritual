@@ -25,15 +25,16 @@ const app = express();
 // Security headers
 app.use(helmet());
 
-// CORS — allow frontend origins
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  ...(process.env.CLIENT_URL?.split(",") || [])
+]
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173',         // Vite dev
-    'http://localhost:3000',         // Alt dev
-    process.env.CLIENT_URL           // Production
-  ].filter(Boolean),
+  origin: allowedOrigins,
   credentials: true
-}));
+}))
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
