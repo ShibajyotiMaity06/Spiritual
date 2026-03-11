@@ -3,15 +3,9 @@ env
 node_modules/
 dist/
 build/
-audio/
-gita_dataset_v3.json
 prd.txt
 remove_audio.js
 subscriptions.json
 yedo.js
-quran-verses.json
-bible_streak.json
-gita_streak.json
-quran_streak.json
-john-kjv-complete.json
+
 payments.json

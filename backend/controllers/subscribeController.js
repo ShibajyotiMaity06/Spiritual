@@ -12,9 +12,9 @@ const { getVerseByIndex, getQuranVersesByIndex, getBibleVerseByIndex, loadDatase
 const { formatEmailHTML, formatEmailSubject, formatQuranEmailHTML, formatQuranEmailSubject, formatBibleEmailHTML, formatBibleEmailSubject } = require('../services/messageFormatter');
 
 // Path to the manual subscriptions file (outside backend & frontend)
-const SUBSCRIPTIONS_FILE = path.join(__dirname, '..', '..', 'subscriptions.json');
+const SUBSCRIPTIONS_FILE = path.join(__dirname, '..', 'data', 'subscriptions.json');
 // Path to the manual payments file (outside backend & frontend)
-const PAYMENTS_FILE = path.join(__dirname, '..', '..', 'payments.json');
+const PAYMENTS_FILE = path.join(__dirname, '..', 'data', 'payments.json');
 
 // Generate unique referral code
 const generateReferralCode = (name) => {

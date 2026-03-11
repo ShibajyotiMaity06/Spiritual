@@ -50,7 +50,7 @@ app.use('/audio', (req, res, next) => {
     return res.status(404).json({ success: false, message: 'Audio not available' });
   }
   next();
-}, express.static(path.join(__dirname, '..', 'audio')));
+}, express.static(path.join(__dirname, 'data', 'audio')));
 
 // ───────────────── Health Check ─────────────────
 

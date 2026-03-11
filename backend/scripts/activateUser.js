@@ -30,7 +30,7 @@ const {
 } = require('../services/messageFormatter');
 const { sendWhatsAppAudio } = require('../services/whatsappService');
 
-const PAYMENTS_FILE = path.join(__dirname, '..', '..', 'payments.json');
+const PAYMENTS_FILE = path.join(__dirname, '..', 'data', 'payments.json');
 
 function isEmail(input) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);

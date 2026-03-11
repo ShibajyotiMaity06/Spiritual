@@ -25,7 +25,7 @@ let gitaDataset = null;
 function loadDataset() {
     if (gitaDataset) return gitaDataset;
 
-    const dataPath = path.join(__dirname, '..', '..', 'gita_dataset_v3.json');
+    const dataPath = path.join(__dirname, '..', 'data', 'gita_dataset_v3.json');
     try {
         const raw = fs.readFileSync(dataPath, 'utf-8');
         gitaDataset = JSON.parse(raw);
@@ -45,7 +45,7 @@ let quranDataset = null;
 function loadQuranDataset() {
     if (quranDataset) return quranDataset;
 
-    const dataPath = path.join(__dirname, '..', '..', 'quran-verses.json');
+    const dataPath = path.join(__dirname, '..', 'data', 'quran-verses.json');
     try {
         const raw = fs.readFileSync(dataPath, 'utf-8');
         quranDataset = JSON.parse(raw);
@@ -105,7 +105,7 @@ let bibleDataset = null;
 function loadBibleDataset() {
     if (bibleDataset) return bibleDataset;
 
-    const dataPath = path.join(__dirname, '..', '..', 'john-kjv-complete.json');
+    const dataPath = path.join(__dirname, '..', 'data', 'john-kjv-complete.json');
     try {
         const raw = fs.readFileSync(dataPath, 'utf-8');
         const data = JSON.parse(raw);
@@ -149,7 +149,7 @@ function loadStreakData(book) {
     const fileName = fileMap[book];
     if (!fileName) return [];
 
-    const filePath = path.join(__dirname, '..', '..', fileName);
+    const filePath = path.join(__dirname, '..', 'data', fileName);
     try {
         const raw = fs.readFileSync(filePath, 'utf-8');
         const data = JSON.parse(raw);
