@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ArrowRight, ChevronDown, Star } from 'lucide-react';
-import BibleNavbar from '../components/BibleNavbar';
 import Footer from '../components/Footer';
 import PricingSection from '../components/PricingSection';
 
@@ -14,9 +13,7 @@ export default function BibleLanding() {
 
     return (
         <div className="min-h-screen flex flex-col bg-[#F4F8FD] font-sans">
-            <BibleNavbar />
-
-            <main className="flex-1 pt-24">
+            <main className="flex-1">
                 {/* Hero Section */}
                 <section className="relative pt-20 pb-20 text-center px-4 sm:px-6 lg:px-8">
                     <div className="max-w-4xl mx-auto space-y-6">
@@ -59,7 +56,10 @@ export default function BibleLanding() {
                                 )}
                             </div>
 
-                            <button className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#2980B9] to-[#3498DB] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity">
+                            <button
+                                onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
+                                className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#2980B9] to-[#3498DB] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity"
+                            >
                                 Start Journey <ArrowRight size={18} />
                             </button>
 
@@ -68,7 +68,7 @@ export default function BibleLanding() {
                 </section>
 
                 {/* Inherit generic PricingSection */}
-                <div className="bg-[#F4F8FD]">
+                <div id="pricing" className="bg-[#F4F8FD]">
                     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-serif font-bold text-center text-[#1A2025] mb-8">Choose Your Plan</h2>
                     </div>

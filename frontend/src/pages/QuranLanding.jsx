@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ArrowRight, ChevronDown, Star } from 'lucide-react';
-import QuranNavbar from '../components/QuranNavbar';
 import Footer from '../components/Footer';
 import PricingSection from '../components/PricingSection';
 
@@ -16,11 +15,9 @@ export default function QuranLanding() {
 
     return (
         <div className="min-h-screen flex flex-col bg-[#E8F5EE] font-sans">
-            <QuranNavbar />
-
-            <main className="flex-1 pt-0">
+            <main className="flex-1">
                 {/* Hero Section */}
-                <section className="relative pt-28 pb-20 px-4 sm:px-6 lg:px-8">
+                <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8">
                     <div className="max-w-7xl mx-auto">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                             <div className="text-center lg:text-left space-y-6">
@@ -63,7 +60,10 @@ export default function QuranLanding() {
                                             )}
                                         </div>
 
-                                        <button className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#27AE60] to-[#2ECC71] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity">
+                                        <button
+                                            onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
+                                            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#27AE60] to-[#2ECC71] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity"
+                                        >
                                             Start Journey <ArrowRight size={18} />
                                         </button>
                                     </div>
@@ -80,7 +80,7 @@ export default function QuranLanding() {
                 </section>
 
                 {/* Inherit generic PricingSection */}
-                <div className="bg-[#F4FDF8]">
+                <div id="pricing" className="bg-[#F4FDF8]">
                     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-serif font-bold text-center text-[#1A2520] mb-8">Choose Your Plan</h2>
                     </div>

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { ArrowRight, ChevronDown, Star } from 'lucide-react';
-import GitaNavbar from '../components/GitaNavbar';
 import Footer from '../components/Footer';
 import PricingSection from '../components/PricingSection';
 
@@ -19,9 +18,7 @@ export default function HinduLanding() {
 
     return (
         <div className="min-h-screen flex flex-col bg-[#FCF8F2] font-sans">
-            <GitaNavbar />
-
-            <main className="flex-1 pt-16">
+            <main className="flex-1">
                 {/* Hero Section */}
                 <section className="relative pt-12 pb-20 px-4 sm:px-6 lg:px-8">
                     <div className="max-w-7xl mx-auto">
@@ -66,7 +63,10 @@ export default function HinduLanding() {
                                             )}
                                         </div>
 
-                                        <button className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#F39C12] to-[#E67E22] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity">
+                                        <button
+                                            onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
+                                            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#F39C12] to-[#E67E22] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity"
+                                        >
                                             Start Journey <ArrowRight size={18} />
                                         </button>
                                     </div>
@@ -83,7 +83,7 @@ export default function HinduLanding() {
                 </section>
 
                 {/* Inherit generic PricingSection */}
-                <div className="bg-[#FCF8F2]">
+                <div id="pricing" className="bg-[#FCF8F2]">
                     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-serif font-bold text-center text-[#2A231C] mb-8">Choose Your Plan</h2>
                     </div>
@@ -179,33 +179,6 @@ export default function HinduLanding() {
                                         <p className="text-xs text-gray-400 uppercase tracking-widest">Yoga Practitioner</p>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Newsletter / Opt-in */}
-                <section className="py-12 bg-[#FCF8F2]">
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="bg-[#2A231C] rounded-[3rem] p-12 text-center relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-[#4A3E31] rounded-bl-full opacity-50"></div>
-
-                            <div className="relative z-10">
-                                <h2 className="text-3xl md:text-4xl font-serif text-brand-saffron mb-4">Join the Soulful Circle</h2>
-                                <p className="text-gray-300 max-w-lg mx-auto mb-8">
-                                    Receive one verse every morning at Brahma Muhurta. No ads, just wisdom.
-                                </p>
-
-                                <form className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto" onSubmit={(e) => e.preventDefault()}>
-                                    <input
-                                        type="email"
-                                        placeholder="Your email address or WhatsApp #"
-                                        className="flex-1 px-6 py-4 rounded-xl bg-[#3D332A] text-white border border-[#4A3E31] focus:outline-none focus:border-brand-saffron placeholder-gray-500"
-                                    />
-                                    <button className="px-8 py-4 bg-brand-saffron text-white hover:bg-[#E67E22] font-bold rounded-xl transition-colors">
-                                        Notify Me
-                                    </button>
-                                </form>
                             </div>
                         </div>
                     </div>
