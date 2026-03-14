@@ -1,13 +1,13 @@
-// ═══════════════════════════════════════════════════════
-// middleware/rateLimiter.js — Rate Limiting
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const rateLimit = require('express-rate-limit');
 
-// General API rate limit
+
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per window
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -16,10 +16,10 @@ const apiLimiter = rateLimit({
   }
 });
 
-// Strict limit for auth routes (login / register)
+
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts per window
+  windowMs: 15 * 60 * 1000,
+  max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -28,9 +28,9 @@ const authLimiter = rateLimit({
   }
 });
 
-// Webhook rate limit (WhatsApp callbacks)
+
 const webhookLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
+  windowMs: 1 * 60 * 1000,
   max: 200,
   standardHeaders: true,
   legacyHeaders: false,

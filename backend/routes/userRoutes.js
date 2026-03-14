@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════
-// routes/userRoutes.js
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const express = require('express');
 const router = express.Router();
@@ -13,7 +13,7 @@ const {
 } = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
 
-// All routes require auth
+
 router.use(protect);
 
 router.put('/profile', updateProfile);

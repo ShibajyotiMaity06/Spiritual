@@ -1,51 +1,51 @@
-// ═══════════════════════════════════════════════════════
-// controllers/analyticsController.js — Dashboard Analytics (Admin)
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const Analytics = require('../models/Analytics');
 const User = require('../models/User');
 const Payment = require('../models/Payment');
 const DeliveryLog = require('../models/DeliveryLog');
 
-// ─────────────────────────────────────────────────────
-// GET /api/analytics/overview — Snapshot of key metrics
-// ─────────────────────────────────────────────────────
+
+
+
 const getOverview = async (req, res, next) => {
   try {
     const [
-      totalUsers,
-      freeUsers,
-      basicUsers,
-      premiumUsers,
-      activeUsers,
-      totalRevenue,
-      totalDeliveries
-    ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ subscriptionStatus: 'free' }),
-      User.countDocuments({ subscriptionStatus: 'paid_basic' }),
-      User.countDocuments({ subscriptionStatus: 'paid_premium' }),
-      User.countDocuments({
-        lastActivityAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
-      }),
-      Payment.aggregate([
-        { $match: { status: 'success' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]),
-      DeliveryLog.countDocuments()
-    ]);
+    totalUsers,
+    freeUsers,
+    basicUsers,
+    premiumUsers,
+    activeUsers,
+    totalRevenue,
+    totalDeliveries] =
+    await Promise.all([
+    User.countDocuments(),
+    User.countDocuments({ subscriptionStatus: 'free' }),
+    User.countDocuments({ subscriptionStatus: 'paid_basic' }),
+    User.countDocuments({ subscriptionStatus: 'paid_premium' }),
+    User.countDocuments({
+      lastActivityAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+    }),
+    Payment.aggregate([
+    { $match: { status: 'success' } },
+    { $group: { _id: null, total: { $sum: '$amount' } } }]
+    ),
+    DeliveryLog.countDocuments()]
+    );
 
-    // Religion breakdown
+
     const religionBreakdown = await User.aggregate([
-      { $group: { _id: '$religion', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ]);
+    { $group: { _id: '$religion', count: { $sum: 1 } } },
+    { $sort: { count: -1 } }]
+    );
 
-    // Language breakdown
+
     const languageBreakdown = await User.aggregate([
-      { $group: { _id: '$language', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ]);
+    { $group: { _id: '$language', count: { $sum: 1 } } },
+    { $sort: { count: -1 } }]
+    );
 
     res.status(200).json({
       success: true,
@@ -57,9 +57,9 @@ const getOverview = async (req, res, next) => {
             basic: basicUsers,
             premium: premiumUsers,
             activeThisWeek: activeUsers,
-            paidConversionRate: totalUsers > 0
-              ? `${(((basicUsers + premiumUsers) / totalUsers) * 100).toFixed(1)}%`
-              : '0%'
+            paidConversionRate: totalUsers > 0 ?
+            `${((basicUsers + premiumUsers) / totalUsers * 100).toFixed(1)}%` :
+            '0%'
           },
           revenue: {
             total: totalRevenue[0]?.total || 0,
@@ -69,8 +69,8 @@ const getOverview = async (req, res, next) => {
             totalDeliveries
           },
           breakdown: {
-            religion: religionBreakdown.map(r => ({ religion: r._id, count: r.count })),
-            language: languageBreakdown.map(l => ({ language: l._id, count: l.count }))
+            religion: religionBreakdown.map((r) => ({ religion: r._id, count: r.count })),
+            language: languageBreakdown.map((l) => ({ language: l._id, count: l.count }))
           }
         }
       }
@@ -80,31 +80,31 @@ const getOverview = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/analytics/signups — Signup trends
-// ─────────────────────────────────────────────────────
+
+
+
 const getSignupTrends = async (req, res, next) => {
   try {
     const { days = 30 } = req.query;
     const startDate = new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
 
     const signups = await User.aggregate([
-      { $match: { createdAt: { $gte: startDate } } },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
-          },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
+    { $match: { createdAt: { $gte: startDate } } },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+        },
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } }]
+    );
 
     res.status(200).json({
       success: true,
       data: {
-        trends: signups.map(s => ({ date: s._id, signups: s.count }))
+        trends: signups.map((s) => ({ date: s._id, signups: s.count }))
       }
     });
   } catch (error) {
@@ -112,65 +112,65 @@ const getSignupTrends = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/analytics/delivery — Delivery stats
-// ─────────────────────────────────────────────────────
+
+
+
 const getDeliveryStats = async (req, res, next) => {
   try {
     const { days = 30 } = req.query;
     const startDate = new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
 
-    // Delivery by method
+
     const byMethod = await DeliveryLog.aggregate([
-      { $match: { timestamp: { $gte: startDate } } },
-      {
-        $group: {
-          _id: '$deliveryMethod',
-          count: { $sum: 1 },
-          totalCost: { $sum: '$cost' }
-        }
+    { $match: { timestamp: { $gte: startDate } } },
+    {
+      $group: {
+        _id: '$deliveryMethod',
+        count: { $sum: 1 },
+        totalCost: { $sum: '$cost' }
       }
-    ]);
+    }]
+    );
 
-    // Delivery by status
+
     const byStatus = await DeliveryLog.aggregate([
-      { $match: { timestamp: { $gte: startDate } } },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
+    { $match: { timestamp: { $gte: startDate } } },
+    {
+      $group: {
+        _id: '$status',
+        count: { $sum: 1 }
       }
-    ]);
+    }]
+    );
 
-    // Daily delivery volume
+
     const dailyVolume = await DeliveryLog.aggregate([
-      { $match: { timestamp: { $gte: startDate } } },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$timestamp' }
-          },
-          count: { $sum: 1 },
-          cost: { $sum: '$cost' }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
+    { $match: { timestamp: { $gte: startDate } } },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: '%Y-%m-%d', date: '$timestamp' }
+        },
+        count: { $sum: 1 },
+        cost: { $sum: '$cost' }
+      }
+    },
+    { $sort: { _id: 1 } }]
+    );
 
     res.status(200).json({
       success: true,
       data: {
-        byMethod: byMethod.map(m => ({
+        byMethod: byMethod.map((m) => ({
           method: m._id,
           count: m.count,
           totalCost: m.totalCost
         })),
-        byStatus: byStatus.map(s => ({
+        byStatus: byStatus.map((s) => ({
           status: s._id,
           count: s.count
         })),
-        dailyVolume: dailyVolume.map(d => ({
+        dailyVolume: dailyVolume.map((d) => ({
           date: d._id,
           deliveries: d.count,
           cost: d.cost
@@ -182,50 +182,50 @@ const getDeliveryStats = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/analytics/revenue — Revenue breakdown
-// ─────────────────────────────────────────────────────
+
+
+
 const getRevenueStats = async (req, res, next) => {
   try {
     const { days = 30 } = req.query;
     const startDate = new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
 
-    // Revenue by plan
-    const byPlan = await Payment.aggregate([
-      { $match: { status: 'success', createdAt: { $gte: startDate } } },
-      {
-        $group: {
-          _id: '$plan',
-          count: { $sum: 1 },
-          totalRevenue: { $sum: '$amount' }
-        }
-      }
-    ]);
 
-    // Daily revenue
+    const byPlan = await Payment.aggregate([
+    { $match: { status: 'success', createdAt: { $gte: startDate } } },
+    {
+      $group: {
+        _id: '$plan',
+        count: { $sum: 1 },
+        totalRevenue: { $sum: '$amount' }
+      }
+    }]
+    );
+
+
     const dailyRevenue = await Payment.aggregate([
-      { $match: { status: 'success', paidAt: { $gte: startDate } } },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$paidAt' }
-          },
-          revenue: { $sum: '$amount' },
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
+    { $match: { status: 'success', paidAt: { $gte: startDate } } },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: '%Y-%m-%d', date: '$paidAt' }
+        },
+        revenue: { $sum: '$amount' },
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } }]
+    );
 
     res.status(200).json({
       success: true,
       data: {
-        byPlan: byPlan.map(p => ({
+        byPlan: byPlan.map((p) => ({
           plan: p._id,
           subscriptions: p.count,
           revenue: p.totalRevenue
         })),
-        dailyRevenue: dailyRevenue.map(d => ({
+        dailyRevenue: dailyRevenue.map((d) => ({
           date: d._id,
           revenue: d.revenue,
           transactions: d.count
@@ -237,9 +237,9 @@ const getRevenueStats = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/analytics/users — All users list (Admin)
-// ─────────────────────────────────────────────────────
+
+
+
 const getAllUsers = async (req, res, next) => {
   try {
     const {
@@ -257,23 +257,23 @@ const getAllUsers = async (req, res, next) => {
     if (language) filter.language = language;
     if (search) {
       filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { whatsappNumber: { $regex: search, $options: 'i' } }
-      ];
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+      { whatsappNumber: { $regex: search, $options: 'i' } }];
+
     }
 
     const skip = (Number(page) - 1) * Number(limit);
 
     const [users, total] = await Promise.all([
-      User.find(filter)
-        .select('-__v')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      User.countDocuments(filter)
-    ]);
+    User.find(filter).
+    select('-__v').
+    sort({ createdAt: -1 }).
+    skip(skip).
+    limit(Number(limit)).
+    lean(),
+    User.countDocuments(filter)]
+    );
 
     res.status(200).json({
       success: true,

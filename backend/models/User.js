@@ -1,16 +1,16 @@
-// ═══════════════════════════════════════════════════════
-// models/User.js
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  // Basic Info
+
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true, lowercase: true },
   whatsappNumber: { type: String, default: undefined, sparse: true },
 
-  // Religion & Preferences
+
   religion: {
     type: String,
     enum: ['hindu', 'muslim', 'christian'],
@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
   },
   preferredTime: {
     type: Number,
-    default: 6, // 6 AM
+    default: 6,
     min: 5,
     max: 22
   },
@@ -37,14 +37,14 @@ const userSchema = new mongoose.Schema({
     default: 'Asia/Kolkata'
   },
 
-  // Delivery channel preference (user chooses one)
+
   deliveryChannel: {
     type: String,
     enum: ['email', 'whatsapp'],
     default: 'email'
   },
 
-  // Subscription
+
   subscriptionStatus: {
     type: String,
     enum: ['free', 'trial', 'paid_basic', 'paid_standard', 'paid_premium', 'expired'],
@@ -58,31 +58,31 @@ const userSchema = new mongoose.Schema({
   subscriptionStartDate: { type: Date, default: null },
   subscriptionExpiry: { type: Date, default: null },
 
-  // Trial
+
   trialStartDate: { type: Date, default: null },
   trialExpiry: { type: Date, default: null },
 
-  // Payment
+
   razorpayPaymentId: { type: String, default: null },
   razorpaySubscriptionId: { type: String, default: null },
   amountPaid: { type: Number, default: 0 },
 
-  // Content Progress
+
   currentVerseIndex: { type: Number, default: 0 },
   lastVerseDeliveredAt: { type: Date, default: null },
 
-  // Engagement
+
   streakCount: { type: Number, default: 0 },
   longestStreak: { type: Number, default: 0 },
   totalVersesReceived: { type: Number, default: 0 },
   lastActivityAt: { type: Date, default: Date.now },
 
-  // Status
+
   isActive: { type: Boolean, default: true },
   isWhatsappOptedIn: { type: Boolean, default: false },
   isEmailOptedIn: { type: Boolean, default: true },
 
-  // Metadata
+
   signupSource: {
     type: String,
     enum: ['organic', 'whatsapp_group', 'instagram', 'facebook', 'google_ads'],
@@ -95,11 +95,11 @@ const userSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-// Indexes for performance (email & whatsappNumber already indexed via unique/sparse in schema)
+
 userSchema.index({ subscriptionStatus: 1 });
 userSchema.index({ religion: 1, language: 1 });
 
-// Pre-save hook
+
 userSchema.pre('save', function () {
   this.updatedAt = Date.now();
 });

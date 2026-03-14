@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════
-// services/schedulerService.js — Cron-based Auto-Delivery
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const cron = require('node-cron');
 const fs = require('fs');
@@ -9,476 +9,476 @@ const User = require('../models/User');
 const DeliveryLog = require('../models/DeliveryLog');
 const { PLAN_FEATURES } = require('../config/constants');
 const {
-    formatWhatsAppMessage, formatEmailHTML, formatEmailSubject,
-    formatQuranWhatsAppMessage, formatQuranEmailHTML, formatQuranEmailSubject,
-    formatBibleWhatsAppMessage, formatBibleEmailHTML, formatBibleEmailSubject,
-    userGetsAudio, getAudioUrl
+  formatWhatsAppMessage, formatEmailHTML, formatEmailSubject,
+  formatQuranWhatsAppMessage, formatQuranEmailHTML, formatQuranEmailSubject,
+  formatBibleWhatsAppMessage, formatBibleEmailHTML, formatBibleEmailSubject,
+  userGetsAudio, getAudioUrl
 } = require('./messageFormatter');
 const { sendWhatsAppMessage, sendWhatsAppAudio } = require('./whatsappService');
 const { sendVerseEmail } = require('./emailService');
 
-// ─────────────────────────────────────────────────────
-// Load Gita dataset from JSON
-// ─────────────────────────────────────────────────────
+
+
+
 let gitaDataset = null;
 
 function loadDataset() {
-    if (gitaDataset) return gitaDataset;
+  if (gitaDataset) return gitaDataset;
 
-    const dataPath = path.join(__dirname, '..', 'data', 'gita_dataset_v3.json');
-    try {
-        const raw = fs.readFileSync(dataPath, 'utf-8');
-        gitaDataset = JSON.parse(raw);
-        console.log(`📖 Loaded Gita dataset: ${gitaDataset.length} verses`);
-        return gitaDataset;
-    } catch (error) {
-        console.error('❌ Failed to load Gita dataset:', error.message);
-        return [];
-    }
+  const dataPath = path.join(__dirname, '..', 'data', 'gita_dataset_v3.json');
+  try {
+    const raw = fs.readFileSync(dataPath, 'utf-8');
+    gitaDataset = JSON.parse(raw);
+    console.log(`📖 Loaded Gita dataset: ${gitaDataset.length} verses`);
+    return gitaDataset;
+  } catch (error) {
+    console.error('❌ Failed to load Gita dataset:', error.message);
+    return [];
+  }
 }
 
-// ─────────────────────────────────────────────────────
-// Load Quran dataset from JSON
-// ─────────────────────────────────────────────────────
+
+
+
 let quranDataset = null;
 
 function loadQuranDataset() {
-    if (quranDataset) return quranDataset;
+  if (quranDataset) return quranDataset;
 
-    const dataPath = path.join(__dirname, '..', 'data', 'quran-verses.json');
-    try {
-        const raw = fs.readFileSync(dataPath, 'utf-8');
-        quranDataset = JSON.parse(raw);
-        console.log(`📖 Loaded Quran dataset: ${quranDataset.length} verses`);
-        return quranDataset;
-    } catch (error) {
-        console.error('❌ Failed to load Quran dataset:', error.message);
-        return [];
-    }
+  const dataPath = path.join(__dirname, '..', 'data', 'quran-verses.json');
+  try {
+    const raw = fs.readFileSync(dataPath, 'utf-8');
+    quranDataset = JSON.parse(raw);
+    console.log(`📖 Loaded Quran dataset: ${quranDataset.length} verses`);
+    return quranDataset;
+  } catch (error) {
+    console.error('❌ Failed to load Quran dataset:', error.message);
+    return [];
+  }
 }
 
-// ─────────────────────────────────────────────────────
-// Get verse by index from Gita dataset
-// ─────────────────────────────────────────────────────
+
+
+
 function getVerseByIndex(index) {
-    const dataset = loadDataset();
-    if (dataset.length === 0) return null;
-    return dataset[index % dataset.length];
+  const dataset = loadDataset();
+  if (dataset.length === 0) return null;
+  return dataset[index % dataset.length];
 }
 
-// ─────────────────────────────────────────────────────
-// Get Quran verse pair by currentVerseIndex
-// Quran sends 2 verses per day. If the last verse of a
-// surah is odd (no pair), send just 1, then continue
-// next surah with a fresh pair.
-//
-// currentVerseIndex = position in the flat quran array.
-// Returns: { verses: [v1, v2] or [v1], advanceBy: 2 or 1 }
-// ─────────────────────────────────────────────────────
+
+
+
+
+
+
+
+
+
 function getQuranVersesByIndex(index) {
-    const dataset = loadQuranDataset();
-    if (dataset.length === 0) return null;
+  const dataset = loadQuranDataset();
+  if (dataset.length === 0) return null;
 
-    const idx = index % dataset.length;
-    const first = dataset[idx];
-    if (!first) return null;
+  const idx = index % dataset.length;
+  const first = dataset[idx];
+  if (!first) return null;
 
-    // Check if there's a second verse
-    const second = dataset[idx + 1] || null;
 
-    // If second verse exists and is in the same surah → send pair
-    if (second && second.surah === first.surah) {
-        return { verses: [first, second], advanceBy: 2 };
-    }
+  const second = dataset[idx + 1] || null;
 
-    // First is the last verse of its surah (or no more data) → send solo
-    // Next call will start fresh from the next surah
-    return { verses: [first], advanceBy: 1 };
+
+  if (second && second.surah === first.surah) {
+    return { verses: [first, second], advanceBy: 2 };
+  }
+
+
+
+  return { verses: [first], advanceBy: 1 };
 }
 
-// ─────────────────────────────────────────────────────
-// Load Bible dataset from JSON (Gospel of John, KJV)
-// Flattens chapters → verses into a single array
-// ─────────────────────────────────────────────────────
+
+
+
+
 let bibleDataset = null;
 
 function loadBibleDataset() {
-    if (bibleDataset) return bibleDataset;
+  if (bibleDataset) return bibleDataset;
 
-    const dataPath = path.join(__dirname, '..', 'data', 'john-kjv-complete.json');
-    try {
-        const raw = fs.readFileSync(dataPath, 'utf-8');
-        const data = JSON.parse(raw);
-        // Flatten chapters into a single verse array
-        bibleDataset = [];
-        for (const ch of data.chapters) {
-            for (const v of ch.verses) {
-                bibleDataset.push(v);
-            }
-        }
-        console.log(`📖 Loaded Bible dataset: ${bibleDataset.length} verses (Gospel of John, KJV)`);
-        return bibleDataset;
-    } catch (error) {
-        console.error('❌ Failed to load Bible dataset:', error.message);
-        return [];
+  const dataPath = path.join(__dirname, '..', 'data', 'john-kjv-complete.json');
+  try {
+    const raw = fs.readFileSync(dataPath, 'utf-8');
+    const data = JSON.parse(raw);
+
+    bibleDataset = [];
+    for (const ch of data.chapters) {
+      for (const v of ch.verses) {
+        bibleDataset.push(v);
+      }
     }
+    console.log(`📖 Loaded Bible dataset: ${bibleDataset.length} verses (Gospel of John, KJV)`);
+    return bibleDataset;
+  } catch (error) {
+    console.error('❌ Failed to load Bible dataset:', error.message);
+    return [];
+  }
 }
 
-// ─────────────────────────────────────────────────────
-// Get Bible verse by index (1 verse per day)
-// ─────────────────────────────────────────────────────
+
+
+
 function getBibleVerseByIndex(index) {
-    const dataset = loadBibleDataset();
-    if (dataset.length === 0) return null;
-    return dataset[index % dataset.length];
+  const dataset = loadBibleDataset();
+  if (dataset.length === 0) return null;
+  return dataset[index % dataset.length];
 }
 
-// ─────────────────────────────────────────────────────
-// Load streak data for a given book
-// ─────────────────────────────────────────────────────
+
+
+
 let streakCache = {};
 
 function loadStreakData(book) {
-    if (streakCache[book]) return streakCache[book];
+  if (streakCache[book]) return streakCache[book];
 
-    const fileMap = {
-        'bhagavad_gita': 'gita_streak.json',
-        'quran': 'quran_streak.json',
-        'bible': 'bible_streak.json'
-    };
-    const fileName = fileMap[book];
-    if (!fileName) return [];
+  const fileMap = {
+    'bhagavad_gita': 'gita_streak.json',
+    'quran': 'quran_streak.json',
+    'bible': 'bible_streak.json'
+  };
+  const fileName = fileMap[book];
+  if (!fileName) return [];
 
-    const filePath = path.join(__dirname, '..', 'data', fileName);
-    try {
-        const raw = fs.readFileSync(filePath, 'utf-8');
-        const data = JSON.parse(raw);
-        const key = Object.keys(data)[0]; // e.g. 'gita_streaks'
-        streakCache[book] = data[key] || [];
-        return streakCache[book];
-    } catch (error) {
-        console.error(`❌ Failed to load streak data for ${book}:`, error.message);
-        return [];
-    }
+  const filePath = path.join(__dirname, '..', 'data', fileName);
+  try {
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const data = JSON.parse(raw);
+    const key = Object.keys(data)[0];
+    streakCache[book] = data[key] || [];
+    return streakCache[book];
+  } catch (error) {
+    console.error(`❌ Failed to load streak data for ${book}:`, error.message);
+    return [];
+  }
 }
 
 function getStreakMessage(book, dayOfMonth) {
-    const streaks = loadStreakData(book);
-    if (streaks.length === 0) return null;
-    // dayOfMonth 1-30 maps to day 1-30 in streak JSON; wrap if needed
-    const day = ((dayOfMonth - 1) % streaks.length) + 1;
-    const entry = streaks.find(s => s.day === day);
-    return entry ? { day, message: entry.message } : null;
+  const streaks = loadStreakData(book);
+  if (streaks.length === 0) return null;
+
+  const day = (dayOfMonth - 1) % streaks.length + 1;
+  const entry = streaks.find((s) => s.day === day);
+  return entry ? { day, message: entry.message } : null;
 }
 
-// ─────────────────────────────────────────────────────
-// Check if user qualifies for streak messages (₹99+ plans)
-// ─────────────────────────────────────────────────────
+
+
+
 function userGetsStreak(user) {
-    return ['paid_basic', 'paid_standard', 'paid_premium'].includes(user.subscriptionStatus);
+  return ['paid_basic', 'paid_standard', 'paid_premium'].includes(user.subscriptionStatus);
 }
 
-// ─────────────────────────────────────────────────────
-// Get the effective delivery channel for a user
-// Free & Basic = email only
-// Standard & Premium = user's chosen channel (email OR whatsapp)
-// ─────────────────────────────────────────────────────
+
+
+
+
+
 function getEffectiveChannel(user) {
-    const features = PLAN_FEATURES[user.subscriptionStatus];
-    if (!features || features.allowedChannels.length === 0) {
-        return null; // expired or unknown plan
-    }
+  const features = PLAN_FEATURES[user.subscriptionStatus];
+  if (!features || features.allowedChannels.length === 0) {
+    return null;
+  }
 
-    const preferred = user.deliveryChannel || 'email';
+  const preferred = user.deliveryChannel || 'email';
 
-    // If user chose whatsapp and their plan allows it, use whatsapp
-    if (preferred === 'whatsapp' && features.allowedChannels.includes('whatsapp') && user.whatsappNumber) {
-        return 'whatsapp';
-    }
 
-    // Otherwise email
-    return 'email';
+  if (preferred === 'whatsapp' && features.allowedChannels.includes('whatsapp') && user.whatsappNumber) {
+    return 'whatsapp';
+  }
+
+
+  return 'email';
 }
 
-// ─────────────────────────────────────────────────────
-// Deliver verse to a single user
-// ─────────────────────────────────────────────────────
+
+
+
 async function deliverVerseToUser(user) {
-    try {
-        const userBook = user.book || 'bhagavad_gita';
-        const isQuran = userBook === 'quran';
-        const isBible = userBook === 'bible';
+  try {
+    const userBook = user.book || 'bhagavad_gita';
+    const isQuran = userBook === 'quran';
+    const isBible = userBook === 'bible';
 
-        // Get verse(s) based on book
-        let verse, quranPair, advanceBy = 1;
 
-        if (isQuran) {
-            quranPair = getQuranVersesByIndex(user.currentVerseIndex);
-            if (!quranPair) {
-                console.log(`⚠️ No Quran verse found for user ${user.email} at index ${user.currentVerseIndex}`);
-                return;
-            }
-            advanceBy = quranPair.advanceBy;
-        } else if (isBible) {
-            verse = getBibleVerseByIndex(user.currentVerseIndex);
-            if (!verse) {
-                console.log(`⚠️ No Bible verse found for user ${user.email} at index ${user.currentVerseIndex}`);
-                return;
-            }
-        } else {
-            verse = getVerseByIndex(user.currentVerseIndex);
-            if (!verse) {
-                console.log(`⚠️ No verse found for user ${user.email} at index ${user.currentVerseIndex}`);
-                return;
-            }
-        }
+    let verse,quranPair,advanceBy = 1;
 
-        // Get streak data for ₹99+ users
-        const streak = userGetsStreak(user) ? getStreakMessage(userBook, new Date().getDate()) : null;
-
-        const channel = getEffectiveChannel(user);
-        if (!channel) {
-            console.log(`⚠️ No delivery channel for user ${user.email} (status: ${user.subscriptionStatus})`);
-            return;
-        }
-
-        const results = { whatsapp: null, email: null };
-        const includeAudio = userGetsAudio(user);
-
-        // ── Send via the user's effective delivery channel ──
-        if (channel === 'whatsapp' && user.whatsappNumber) {
-            let whatsappText;
-            if (isQuran) {
-                whatsappText = formatQuranWhatsAppMessage(quranPair.verses, user, streak);
-            } else if (isBible) {
-                whatsappText = formatBibleWhatsAppMessage(verse, user, streak);
-            } else {
-                whatsappText = formatWhatsAppMessage(verse, user, streak);
-            }
-            results.whatsapp = await sendWhatsAppMessage(user.whatsappNumber, whatsappText);
-
-            // Log WhatsApp delivery
-            await DeliveryLog.create({
-                userId: user._id,
-                verseId: null,
-                deliveryMethod: 'whatsapp_freeform',
-                status: results.whatsapp.success ? 'sent' : 'failed',
-                cost: 0,
-                whatsappMessageId: results.whatsapp.messageId || null,
-                timestamp: new Date()
-            });
-
-            // Send audio separately if eligible (Bible has no audio)
-            if (includeAudio && !isQuran && !isBible) {
-                const audioUrl = getAudioUrl(verse.id, user.language);
-                await sendWhatsAppAudio(user.whatsappNumber, audioUrl);
-            }
-        } else {
-            // Send email
-            let subject, html;
-            if (isQuran) {
-                subject = formatQuranEmailSubject(quranPair.verses);
-                html = formatQuranEmailHTML(quranPair.verses, user, streak);
-            } else if (isBible) {
-                subject = formatBibleEmailSubject(verse);
-                html = formatBibleEmailHTML(verse, user, streak);
-            } else {
-                subject = formatEmailSubject(verse);
-                html = formatEmailHTML(verse, user, streak);
-            }
-            results.email = await sendVerseEmail(user.email, subject, html);
-
-            // Log email delivery
-            await DeliveryLog.create({
-                userId: user._id,
-                verseId: null,
-                deliveryMethod: 'email',
-                status: results.email.success ? 'sent' : 'failed',
-                cost: 0.01,
-                emailMessageId: results.email.messageId || null,
-                timestamp: new Date()
-            });
-        }
-
-        // ── Update user progress ──
-        const updateQuery = {
-            $inc: { currentVerseIndex: advanceBy, totalVersesReceived: advanceBy, streakCount: 1 },
-            lastVerseDeliveredAt: new Date(),
-            lastActivityAt: new Date()
-        };
-
-        // Update longest streak if current streak exceeds it
-        if (user.streakCount + 1 > user.longestStreak) {
-            updateQuery.longestStreak = user.streakCount + 1;
-        }
-
-        await User.findByIdAndUpdate(user._id, updateQuery);
-
-        const ok = channel === 'whatsapp' ? results.whatsapp?.success : results.email?.success;
-        if (isQuran) {
-            const vIds = quranPair.verses.map(v => `${v.surah}:${v.verse}`).join(', ');
-            console.log(`📨 Delivered Quran ${vIds} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
-        } else if (isBible) {
-            console.log(`📨 Delivered John ${verse.chapter}:${verse.verse} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
-        } else {
-            console.log(`📨 Delivered Gita Ch.${verse.chapter}:${verse.verse} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
-        }
-
-        return results;
-    } catch (error) {
-        console.error(`❌ Delivery failed for user ${user.email}:`, error.message);
+    if (isQuran) {
+      quranPair = getQuranVersesByIndex(user.currentVerseIndex);
+      if (!quranPair) {
+        console.log(`⚠️ No Quran verse found for user ${user.email} at index ${user.currentVerseIndex}`);
+        return;
+      }
+      advanceBy = quranPair.advanceBy;
+    } else if (isBible) {
+      verse = getBibleVerseByIndex(user.currentVerseIndex);
+      if (!verse) {
+        console.log(`⚠️ No Bible verse found for user ${user.email} at index ${user.currentVerseIndex}`);
+        return;
+      }
+    } else {
+      verse = getVerseByIndex(user.currentVerseIndex);
+      if (!verse) {
+        console.log(`⚠️ No verse found for user ${user.email} at index ${user.currentVerseIndex}`);
+        return;
+      }
     }
+
+
+    const streak = userGetsStreak(user) ? getStreakMessage(userBook, new Date().getDate()) : null;
+
+    const channel = getEffectiveChannel(user);
+    if (!channel) {
+      console.log(`⚠️ No delivery channel for user ${user.email} (status: ${user.subscriptionStatus})`);
+      return;
+    }
+
+    const results = { whatsapp: null, email: null };
+    const includeAudio = userGetsAudio(user);
+
+
+    if (channel === 'whatsapp' && user.whatsappNumber) {
+      let whatsappText;
+      if (isQuran) {
+        whatsappText = formatQuranWhatsAppMessage(quranPair.verses, user, streak);
+      } else if (isBible) {
+        whatsappText = formatBibleWhatsAppMessage(verse, user, streak);
+      } else {
+        whatsappText = formatWhatsAppMessage(verse, user, streak);
+      }
+      results.whatsapp = await sendWhatsAppMessage(user.whatsappNumber, whatsappText);
+
+
+      await DeliveryLog.create({
+        userId: user._id,
+        verseId: null,
+        deliveryMethod: 'whatsapp_freeform',
+        status: results.whatsapp.success ? 'sent' : 'failed',
+        cost: 0,
+        whatsappMessageId: results.whatsapp.messageId || null,
+        timestamp: new Date()
+      });
+
+
+      if (includeAudio && !isQuran && !isBible) {
+        const audioUrl = getAudioUrl(verse.id, user.language);
+        await sendWhatsAppAudio(user.whatsappNumber, audioUrl);
+      }
+    } else {
+
+      let subject, html;
+      if (isQuran) {
+        subject = formatQuranEmailSubject(quranPair.verses);
+        html = formatQuranEmailHTML(quranPair.verses, user, streak);
+      } else if (isBible) {
+        subject = formatBibleEmailSubject(verse);
+        html = formatBibleEmailHTML(verse, user, streak);
+      } else {
+        subject = formatEmailSubject(verse);
+        html = formatEmailHTML(verse, user, streak);
+      }
+      results.email = await sendVerseEmail(user.email, subject, html);
+
+
+      await DeliveryLog.create({
+        userId: user._id,
+        verseId: null,
+        deliveryMethod: 'email',
+        status: results.email.success ? 'sent' : 'failed',
+        cost: 0.01,
+        emailMessageId: results.email.messageId || null,
+        timestamp: new Date()
+      });
+    }
+
+
+    const updateQuery = {
+      $inc: { currentVerseIndex: advanceBy, totalVersesReceived: advanceBy, streakCount: 1 },
+      lastVerseDeliveredAt: new Date(),
+      lastActivityAt: new Date()
+    };
+
+
+    if (user.streakCount + 1 > user.longestStreak) {
+      updateQuery.longestStreak = user.streakCount + 1;
+    }
+
+    await User.findByIdAndUpdate(user._id, updateQuery);
+
+    const ok = channel === 'whatsapp' ? results.whatsapp?.success : results.email?.success;
+    if (isQuran) {
+      const vIds = quranPair.verses.map((v) => `${v.surah}:${v.verse}`).join(', ');
+      console.log(`📨 Delivered Quran ${vIds} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
+    } else if (isBible) {
+      console.log(`📨 Delivered John ${verse.chapter}:${verse.verse} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
+    } else {
+      console.log(`📨 Delivered Gita Ch.${verse.chapter}:${verse.verse} to ${user.name} via ${channel.toUpperCase()} (${ok ? '✅' : '❌'})`);
+    }
+
+    return results;
+  } catch (error) {
+    console.error(`❌ Delivery failed for user ${user.email}:`, error.message);
+  }
 }
 
-// ─────────────────────────────────────────────────────
-// Expire trial users whose trial has ended
-// ─────────────────────────────────────────────────────
+
+
+
 async function expireTrials() {
-    try {
-        const result = await User.updateMany(
-            {
-                subscriptionStatus: 'trial',
-                trialExpiry: { $lt: new Date() }
-            },
-            {
-                $set: { subscriptionStatus: 'expired' }
-            }
-        );
+  try {
+    const result = await User.updateMany(
+      {
+        subscriptionStatus: 'trial',
+        trialExpiry: { $lt: new Date() }
+      },
+      {
+        $set: { subscriptionStatus: 'expired' }
+      }
+    );
 
-        if (result.modifiedCount > 0) {
-            console.log(`⏰ Expired ${result.modifiedCount} trial user(s)`);
-        }
-    } catch (error) {
-        console.error('❌ Trial expiry check failed:', error.message);
+    if (result.modifiedCount > 0) {
+      console.log(`⏰ Expired ${result.modifiedCount} trial user(s)`);
     }
+  } catch (error) {
+    console.error('❌ Trial expiry check failed:', error.message);
+  }
 }
 
-// ─────────────────────────────────────────────────────
-// Expire paid subscriptions that have passed their expiry
-// ─────────────────────────────────────────────────────
+
+
+
 async function expireSubscriptions() {
-    try {
-        const result = await User.updateMany(
-            {
-                subscriptionStatus: { $in: ['paid_basic', 'paid_standard', 'paid_premium'] },
-                subscriptionExpiry: { $lt: new Date() }
-            },
-            {
-                $set: { subscriptionStatus: 'expired' }
-            }
-        );
+  try {
+    const result = await User.updateMany(
+      {
+        subscriptionStatus: { $in: ['paid_basic', 'paid_standard', 'paid_premium'] },
+        subscriptionExpiry: { $lt: new Date() }
+      },
+      {
+        $set: { subscriptionStatus: 'expired' }
+      }
+    );
 
-        if (result.modifiedCount > 0) {
-            console.log(`⏰ Expired ${result.modifiedCount} paid subscription(s)`);
-        }
-    } catch (error) {
-        console.error('❌ Subscription expiry check failed:', error.message);
+    if (result.modifiedCount > 0) {
+      console.log(`⏰ Expired ${result.modifiedCount} paid subscription(s)`);
     }
+  } catch (error) {
+    console.error('❌ Subscription expiry check failed:', error.message);
+  }
 }
 
-// ─────────────────────────────────────────────────────
-// Process all users scheduled for the current hour
-// ─────────────────────────────────────────────────────
+
+
+
 async function processScheduledDeliveries() {
-    try {
-        // First, expire any trials and subscriptions that have ended
-        await expireTrials();
-        await expireSubscriptions();
+  try {
 
-        // Get current IST hour
-        // Cron runs in Asia/Kolkata timezone, so we just need the IST hour directly
-        const now = new Date();
-        // Convert UTC to IST properly: IST = UTC + 5:30
-        const istOffset = 5.5 * 60 * 60 * 1000;
-        const istTime = new Date(now.getTime() + istOffset);
-        const currentHour = istTime.getUTCHours();
+    await expireTrials();
+    await expireSubscriptions();
 
-        console.log(`\n⏰ Running scheduled delivery check — UTC: ${now.getUTCHours()}:00, IST hour: ${currentHour}:00`);
 
-        // Find all active users whose preferred time matches current hour
-        // Include: trial (with valid expiry), paid_basic, paid_standard, paid_premium
-        const users = await User.find({
-            isActive: true,
-            preferredTime: currentHour,
-            subscriptionStatus: { $in: ['trial', 'paid_basic', 'paid_standard', 'paid_premium'] },
-            // Don't deliver if subscription/trial has expired
-            $or: [
-                // Trial users with valid trial
-                { subscriptionStatus: 'trial', trialExpiry: { $gt: new Date() } },
-                // Paid users with no expiry set or valid expiry
-                {
-                    subscriptionStatus: { $in: ['paid_basic', 'paid_standard', 'paid_premium'] },
-                    $or: [
-                        { subscriptionExpiry: null },
-                        { subscriptionExpiry: { $gt: new Date() } }
-                    ]
-                }
-            ]
-        });
 
-        if (users.length === 0) {
-            console.log('📭 No users scheduled for delivery at this hour.');
-            return;
-        }
+    const now = new Date();
 
-        console.log(`📬 Found ${users.length} users scheduled for hour ${currentHour}`);
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istTime = new Date(now.getTime() + istOffset);
+    const currentHour = istTime.getUTCHours();
 
-        // Process deliveries in batches of 10
-        const BATCH_SIZE = 10;
-        for (let i = 0; i < users.length; i += BATCH_SIZE) {
-            const batch = users.slice(i, i + BATCH_SIZE);
-            await Promise.all(batch.map(user => deliverVerseToUser(user)));
+    console.log(`\n⏰ Running scheduled delivery check — UTC: ${now.getUTCHours()}:00, IST hour: ${currentHour}:00`);
 
-            // Small delay between batches
-            if (i + BATCH_SIZE < users.length) {
-                await new Promise(r => setTimeout(r, 1000));
-            }
-        }
 
-        console.log(`✅ Scheduled delivery complete. Processed ${users.length} users.\n`);
-    } catch (error) {
-        console.error('❌ Scheduled delivery error:', error.message);
-    }
-}
 
-// ─────────────────────────────────────────────────────
-// Deliver verse to a specific user (on-demand)
-// Used by webhook for free users and admin trigger
-// ─────────────────────────────────────────────────────
-async function deliverVerseOnDemand(userId) {
-    const user = await User.findById(userId);
-    if (!user) return null;
-    return deliverVerseToUser(user);
-}
+    const users = await User.find({
+      isActive: true,
+      preferredTime: currentHour,
+      subscriptionStatus: { $in: ['trial', 'paid_basic', 'paid_standard', 'paid_premium'] },
 
-// ─────────────────────────────────────────────────────
-// Start the cron scheduler
-// Runs at the top of every hour
-// ─────────────────────────────────────────────────────
-function startScheduler() {
-    // Run every hour at minute 0
-    cron.schedule('0 * * * *', () => {
-        console.log('🕐 Cron triggered: checking for scheduled deliveries...');
-        processScheduledDeliveries();
-    }, {
-        timezone: 'Asia/Kolkata'
+      $or: [
+
+      { subscriptionStatus: 'trial', trialExpiry: { $gt: new Date() } },
+
+      {
+        subscriptionStatus: { $in: ['paid_basic', 'paid_standard', 'paid_premium'] },
+        $or: [
+        { subscriptionExpiry: null },
+        { subscriptionExpiry: { $gt: new Date() } }]
+
+      }]
+
     });
 
-    console.log('🗓️  Verse delivery scheduler started (runs every hour)');
+    if (users.length === 0) {
+      console.log('📭 No users scheduled for delivery at this hour.');
+      return;
+    }
+
+    console.log(`📬 Found ${users.length} users scheduled for hour ${currentHour}`);
+
+
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < users.length; i += BATCH_SIZE) {
+      const batch = users.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map((user) => deliverVerseToUser(user)));
+
+
+      if (i + BATCH_SIZE < users.length) {
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+
+    console.log(`✅ Scheduled delivery complete. Processed ${users.length} users.\n`);
+  } catch (error) {
+    console.error('❌ Scheduled delivery error:', error.message);
+  }
+}
+
+
+
+
+
+async function deliverVerseOnDemand(userId) {
+  const user = await User.findById(userId);
+  if (!user) return null;
+  return deliverVerseToUser(user);
+}
+
+
+
+
+
+function startScheduler() {
+
+  cron.schedule('0 * * * *', () => {
+    console.log('🕐 Cron triggered: checking for scheduled deliveries...');
+    processScheduledDeliveries();
+  }, {
+    timezone: 'Asia/Kolkata'
+  });
+
+  console.log('🗓️  Verse delivery scheduler started (runs every hour)');
 }
 
 module.exports = {
-    startScheduler,
-    deliverVerseToUser,
-    deliverVerseOnDemand,
-    processScheduledDeliveries,
-    getVerseByIndex,
-    getQuranVersesByIndex,
-    getBibleVerseByIndex,
-    loadDataset,
-    loadQuranDataset,
-    loadBibleDataset,
-    getEffectiveChannel,
-    getStreakMessage,
-    userGetsStreak
+  startScheduler,
+  deliverVerseToUser,
+  deliverVerseOnDemand,
+  processScheduledDeliveries,
+  getVerseByIndex,
+  getQuranVersesByIndex,
+  getBibleVerseByIndex,
+  loadDataset,
+  loadQuranDataset,
+  loadBibleDataset,
+  getEffectiveChannel,
+  getStreakMessage,
+  userGetsStreak
 };

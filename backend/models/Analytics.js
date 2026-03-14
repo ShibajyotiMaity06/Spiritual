@@ -1,12 +1,12 @@
-// ═══════════════════════════════════════════════════════
-// models/Analytics.js (Daily aggregate stats)
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const mongoose = require('mongoose');
 
 const analyticsSchema = new mongoose.Schema({
   date: { type: Date, required: true, unique: true },
-  
+
   users: {
     total: Number,
     free: Number,
@@ -16,20 +16,20 @@ const analyticsSchema = new mongoose.Schema({
     newSignups: Number,
     churned: Number
   },
-  
+
   delivery: {
     whatsappTemplatesSent: Number,
     whatsappFreeformSent: Number,
     emailsSent: Number,
-    totalCost: Number // In INR
+    totalCost: Number
   },
-  
+
   engagement: {
     incomingMessages: Number,
     quizResponses: Number,
     averageStreakDays: Number
   },
-  
+
   revenue: {
     totalRevenue: Number,
     basicRevenue: Number,

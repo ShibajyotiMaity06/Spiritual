@@ -1,13 +1,13 @@
-// ═══════════════════════════════════════════════════════
-// middleware/validate.js — Request Validation Middleware
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const { RELIGIONS, LANGUAGES } = require('../config/constants');
 
-// Generic field presence check
+
 const requireFields = (...fields) => {
   return (req, res, next) => {
-    const missing = fields.filter(f => {
+    const missing = fields.filter((f) => {
       const value = req.body[f];
       return value === undefined || value === null || value === '';
     });
@@ -23,7 +23,7 @@ const requireFields = (...fields) => {
   };
 };
 
-// Validate registration body
+
 const validateRegistration = (req, res, next) => {
   const { name, email, religion, language, deliveryChannel } = req.body;
   const errors = [];
@@ -62,7 +62,7 @@ const validateRegistration = (req, res, next) => {
   next();
 };
 
-// Validate verse query params
+
 const validateVerseQuery = (req, res, next) => {
   const { religion, language } = req.query;
   const errors = [];
@@ -82,7 +82,7 @@ const validateVerseQuery = (req, res, next) => {
   next();
 };
 
-// Validate plan selection
+
 const validatePlanSelection = (req, res, next) => {
   const validPlans = ['basic_monthly', 'standard_monthly', 'premium_monthly', 'premium_yearly'];
   const { plan } = req.body;

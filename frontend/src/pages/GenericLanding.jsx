@@ -5,12 +5,12 @@ import Footer from '../components/Footer';
 import PricingSection from '../components/PricingSection';
 
 export default function GenericLanding() {
-    return (
-        <div className="min-h-screen flex flex-col bg-brand-light font-sans">
+  return (
+    <div className="min-h-screen flex flex-col bg-brand-light font-sans">
             <Navbar />
 
             <main className="flex-1">
-                {/* Hero Section */}
+                {}
                 <section className="relative pt-20 pb-24 overflow-hidden">
                     <div className="absolute inset-0 z-0">
                         <div className="absolute inset-0 bg-gradient-to-br from-[#FF9933]/15 via-white to-[#138808]/15" />
@@ -34,11 +34,11 @@ export default function GenericLanding() {
                     </div>
                 </section>
 
-                {/* Path Selection Section */}
+                {}
                 <section className="py-12 pb-24 relative z-10 -mt-10">
                     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
 
-                        {/* Hinduism Card */}
+                        {}
                         <div className="group bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col items-center text-center">
                             <div className="w-20 h-20 rounded-2xl bg-brand-saffron-light flex items-center justify-center mb-6 text-brand-saffron group-hover:scale-110 transition-transform duration-300">
                                 <BookOpen size={40} className="stroke-1" />
@@ -52,7 +52,7 @@ export default function GenericLanding() {
                             </Link>
                         </div>
 
-                        {/* Islam Card */}
+                        {}
                         <div className="group bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col items-center text-center">
                             <div className="w-20 h-20 rounded-2xl bg-brand-green-light flex items-center justify-center mb-6 text-brand-green group-hover:scale-110 transition-transform duration-300">
                                 <Moon size={40} className="stroke-1" />
@@ -66,7 +66,7 @@ export default function GenericLanding() {
                             </Link>
                         </div>
 
-                        {/* Christianity Card */}
+                        {}
                         <div className="group bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col items-center text-center">
                             <div className="w-20 h-20 rounded-2xl bg-brand-blue-light flex items-center justify-center mb-6 text-brand-blue group-hover:scale-110 transition-transform duration-300">
                                 <Cross size={40} className="stroke-1" />
@@ -83,11 +83,11 @@ export default function GenericLanding() {
                     </div>
                 </section>
 
-                {/* Pricing Section */}
+                {}
                 <PricingSection />
             </main>
 
             <Footer />
-        </div>
-    );
+        </div>);
+
 }

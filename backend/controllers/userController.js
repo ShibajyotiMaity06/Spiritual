@@ -1,19 +1,19 @@
-// ═══════════════════════════════════════════════════════
-// controllers/userController.js — User Profile & Settings
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const User = require('../models/User');
 const { RELIGIONS, LANGUAGES } = require('../config/constants');
 
-// ─────────────────────────────────────────────────────
-// PUT /api/users/profile — Update user profile
-// ─────────────────────────────────────────────────────
+
+
+
 const updateProfile = async (req, res, next) => {
   try {
     const allowedFields = [
-      'name', 'language', 'preferredTime', 'timezone',
-      'isWhatsappOptedIn', 'isEmailOptedIn'
-    ];
+    'name', 'language', 'preferredTime', 'timezone',
+    'isWhatsappOptedIn', 'isEmailOptedIn'];
+
 
     const updates = {};
     for (const field of allowedFields) {
@@ -22,7 +22,7 @@ const updateProfile = async (req, res, next) => {
       }
     }
 
-    // Validate language if provided
+
     if (updates.language && !LANGUAGES.includes(updates.language)) {
       return res.status(400).json({
         success: false,
@@ -30,7 +30,7 @@ const updateProfile = async (req, res, next) => {
       });
     }
 
-    // Validate preferredTime if provided
+
     if (updates.preferredTime !== undefined) {
       const t = Number(updates.preferredTime);
       if (isNaN(t) || t < 5 || t > 22) {
@@ -58,9 +58,9 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/users/dashboard — User dashboard stats
-// ─────────────────────────────────────────────────────
+
+
+
 const getDashboard = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).lean();
@@ -105,9 +105,9 @@ const getDashboard = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// PUT /api/users/language — Change language preference
-// ─────────────────────────────────────────────────────
+
+
+
 const changeLanguage = async (req, res, next) => {
   try {
     const { language } = req.body;
@@ -135,9 +135,9 @@ const changeLanguage = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// PUT /api/users/delivery-time — Change delivery time
-// ─────────────────────────────────────────────────────
+
+
+
 const changeDeliveryTime = async (req, res, next) => {
   try {
     const { preferredTime } = req.body;
@@ -166,9 +166,9 @@ const changeDeliveryTime = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// DELETE /api/users/account — Deactivate account
-// ─────────────────────────────────────────────────────
+
+
+
 const deactivateAccount = async (req, res, next) => {
   try {
     await User.findByIdAndUpdate(req.user._id, {

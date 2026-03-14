@@ -14,8 +14,8 @@ function App() {
         <Route path="/quran" element={<QuranLanding />} />
         <Route path="/bible" element={<BibleLanding />} />
       </Routes>
-    </BrowserRouter>
-  );
+    </BrowserRouter>);
+
 }
 
 export default App;

@@ -4,22 +4,22 @@ import Footer from '../components/Footer';
 import PricingSection from '../components/PricingSection';
 
 const languages = [
-    'हिन्दी (Hindi)',
-    'English',
-    'தமிழ் (Tamil)',
-    'తెలుగు (Telugu)',
-    'മലയാളം (Malayalam)',
-    'বাংলা (Bengali)'
-];
+'हिन्दी (Hindi)',
+'English',
+'தமிழ் (Tamil)',
+'తెలుగు (Telugu)',
+'മലയാളം (Malayalam)',
+'বাংলা (Bengali)'];
+
 
 export default function HinduLanding() {
-    const [selectedLang, setSelectedLang] = useState(languages[0]);
-    const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(languages[0]);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
-    return (
-        <div className="min-h-screen flex flex-col bg-[#FCF8F2] font-sans">
+  return (
+    <div className="min-h-screen flex flex-col bg-[#FCF8F2] font-sans">
             <main className="flex-1">
-                {/* Hero Section */}
+                {}
                 <section className="relative pt-12 pb-20 px-4 sm:px-6 lg:px-8">
                     <div className="max-w-7xl mx-auto">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -41,32 +41,32 @@ export default function HinduLanding() {
                                     <div className="bg-white p-2 rounded-2xl shadow-lg border border-orange-100 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                                         <div className="relative w-full sm:w-auto">
                                             <button
-                                                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                                                className="flex items-center justify-between w-full sm:w-40 px-4 py-3 text-[#2A231C] font-medium bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
-                                            >
+                        onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                        className="flex items-center justify-between w-full sm:w-40 px-4 py-3 text-[#2A231C] font-medium bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
+                        
                                                 {selectedLang}
                                                 <ChevronDown size={18} className="text-gray-400" />
                                             </button>
 
-                                            {langDropdownOpen && (
-                                                <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                                                    {languages.map(lang => (
-                                                        <button
-                                                            key={lang}
-                                                            onClick={() => { setSelectedLang(lang); setLangDropdownOpen(false); }}
-                                                            className="w-full text-left px-4 py-2 hover:bg-orange-50 text-[#2A231C] transition-colors"
-                                                        >
+                                            {langDropdownOpen &&
+                      <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                                                    {languages.map((lang) =>
+                        <button
+                          key={lang}
+                          onClick={() => {setSelectedLang(lang);setLangDropdownOpen(false);}}
+                          className="w-full text-left px-4 py-2 hover:bg-orange-50 text-[#2A231C] transition-colors">
+                          
                                                             {lang}
                                                         </button>
-                                                    ))}
+                        )}
                                                 </div>
-                                            )}
+                      }
                                         </div>
 
                                         <button
-                                            onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
-                                            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#F39C12] to-[#E67E22] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity"
-                                        >
+                      onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
+                      className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#F39C12] to-[#E67E22] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity">
+                      
                                             Start Journey <ArrowRight size={18} />
                                         </button>
                                     </div>
@@ -82,7 +82,7 @@ export default function HinduLanding() {
                     </div>
                 </section>
 
-                {/* Inherit generic PricingSection */}
+                {}
                 <div id="pricing" className="bg-[#FCF8F2]">
                     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-serif font-bold text-center text-[#2A231C] mb-8">Choose Your Plan</h2>
@@ -92,7 +92,7 @@ export default function HinduLanding() {
 
 
 
-                {/* Verse Showcase */}
+                {}
                 <section className="py-24 bg-white border-y border-orange-100">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
@@ -102,7 +102,7 @@ export default function HinduLanding() {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4 md:px-0 mt-12 bg-[radial-gradient(ellipse_at_center,rgba(243,156,18,0.05),transparent_70%)] py-12">
 
-                            {/* Card 1 */}
+                            {}
                             <div className="bg-[#FFFDF9] rounded-2xl border-2 border-orange-50 p-8 shadow-sm flex flex-col justify-center items-center text-center transform md:translate-y-8">
                                 <span className="text-brand-saffron font-bold tracking-widest text-xs mb-6 uppercase">Chapter 2, Verse 47</span>
                                 <p className="font-serif text-2xl text-[#2A231C] italic leading-relaxed mb-6">
@@ -116,7 +116,7 @@ export default function HinduLanding() {
                                 </div>
                             </div>
 
-                            {/* Card 2 (Center) */}
+                            {}
                             <div className="bg-[#FFFDF9] rounded-2xl border-2 border-brand-saffron relative p-10 shadow-xl shadow-brand-saffron/10 flex flex-col justify-center items-center text-center z-10 transform md:-translate-y-4">
                                 <span className="text-brand-saffron font-bold tracking-widest text-sm mb-6 uppercase">अध्याय 18, श्लोक 66</span>
                                 <p className="font-serif text-3xl font-medium text-[#2A231C] leading-snug mb-8">
@@ -127,7 +127,7 @@ export default function HinduLanding() {
                                 </p>
                             </div>
 
-                            {/* Card 3 */}
+                            {}
                             <div className="bg-[#FFFDF9] rounded-2xl border-2 border-orange-50 p-8 shadow-sm flex flex-col justify-center items-center text-center transform md:translate-y-8">
                                 <span className="text-brand-saffron font-bold tracking-widest text-xs mb-6 uppercase">Chapter 9, Verse 22</span>
                                 <p className="font-serif text-2xl text-[#2A231C] italic leading-relaxed mb-6">
@@ -145,7 +145,7 @@ export default function HinduLanding() {
                     </div>
                 </section>
 
-                {/* Testimonials */}
+                {}
                 <section className="py-24 bg-[#FCF8F2]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -187,6 +187,6 @@ export default function HinduLanding() {
             </main>
 
             <Footer />
-        </div>
-    );
+        </div>);
+
 }

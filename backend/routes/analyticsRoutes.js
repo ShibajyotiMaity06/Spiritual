@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════
-// routes/analyticsRoutes.js
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const express = require('express');
 const router = express.Router();
@@ -13,7 +13,7 @@ const {
 } = require('../controllers/analyticsController');
 const { protect, adminOnly } = require('../middleware/auth');
 
-// All admin-only
+
 router.use(protect, adminOnly);
 
 router.get('/overview', getOverview);

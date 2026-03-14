@@ -1,29 +1,29 @@
-// ═══════════════════════════════════════════════════════
-// models/Verse.js
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const mongoose = require('mongoose');
 
 const verseSchema = new mongoose.Schema({
-  // Source Info
-  religion: { 
-    type: String, 
-    enum: ['hindu', 'muslim', 'christian'], 
-    required: true 
+
+  religion: {
+    type: String,
+    enum: ['hindu', 'muslim', 'christian'],
+    required: true
   },
-  book: { 
-    type: String, 
-    required: true 
-    // Examples: 'bhagavad_gita', 'quran', 'new_testament', 'old_testament'
+  book: {
+    type: String,
+    required: true
+
   },
   chapter: { type: Number, required: true },
   verseNumber: { type: Number, required: true },
-  
-  // Original Text
+
+
   originalText: { type: String, required: true },
-  transliteration: { type: String }, // For Sanskrit/Arabic
-  
-  // Translations (Multi-language support)
+  transliteration: { type: String },
+
+
   translations: {
     hindi: {
       text: String,
@@ -61,8 +61,8 @@ const verseSchema = new mongoose.Schema({
       commentary: String
     }
   },
-  
-  // Media
+
+
   audioUrls: {
     hindi: String,
     english: String,
@@ -72,24 +72,24 @@ const verseSchema = new mongoose.Schema({
     kannada: String,
     urdu: String
   },
-  imageUrl: String, // Shareable card image (Canva-generated)
-  
-  // Metadata
-  tags: [String], // e.g., ['karma', 'duty', 'action']
-  difficulty: { 
-    type: String, 
+  imageUrl: String,
+
+
+  tags: [String],
+  difficulty: {
+    type: String,
     enum: ['beginner', 'intermediate', 'advanced'],
     default: 'beginner'
   },
-  
-  // Stats
+
+
   deliveredCount: { type: Number, default: 0 },
   sharedCount: { type: Number, default: 0 },
-  
+
   createdAt: { type: Date, default: Date.now }
 });
 
-// Compound index for unique verses
+
 verseSchema.index({ religion: 1, book: 1, chapter: 1, verseNumber: 1 }, { unique: true });
 
 module.exports = mongoose.model('Verse', verseSchema);

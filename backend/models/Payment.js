@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════
-// models/Payment.js
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const mongoose = require('mongoose');
 
@@ -11,7 +11,7 @@ const paymentSchema = new mongoose.Schema({
     required: true
   },
 
-  amount: { type: Number, required: true }, // In INR
+  amount: { type: Number, required: true },
   currency: { type: String, default: 'INR' },
 
   plan: {
@@ -20,7 +20,7 @@ const paymentSchema = new mongoose.Schema({
     required: true
   },
 
-  // Razorpay
+
   razorpayOrderId: String,
   razorpayPaymentId: String,
   razorpaySignature: String,
@@ -31,7 +31,7 @@ const paymentSchema = new mongoose.Schema({
     default: 'pending'
   },
 
-  paymentMethod: String, // 'upi', 'card', 'netbanking', etc.
+  paymentMethod: String,
 
   metadata: mongoose.Schema.Types.Mixed,
 

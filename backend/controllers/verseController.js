@@ -1,15 +1,15 @@
-// ═══════════════════════════════════════════════════════
-// controllers/verseController.js — Verse CRUD & Delivery
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const Verse = require('../models/Verse');
 const User = require('../models/User');
 const DeliveryLog = require('../models/DeliveryLog');
 const { RELIGIONS, LANGUAGES } = require('../config/constants');
 
-// ─────────────────────────────────────────────────────
-// GET /api/verses — Get verses with filters
-// ─────────────────────────────────────────────────────
+
+
+
 const getVerses = async (req, res, next) => {
   try {
     const {
@@ -31,22 +31,22 @@ const getVerses = async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
 
     const [verses, total] = await Promise.all([
-      Verse.find(filter)
-        .sort({ chapter: 1, verseNumber: 1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      Verse.countDocuments(filter)
-    ]);
+    Verse.find(filter).
+    sort({ chapter: 1, verseNumber: 1 }).
+    skip(skip).
+    limit(Number(limit)).
+    lean(),
+    Verse.countDocuments(filter)]
+    );
 
-    // If a specific language is requested, reshape translations
+
     let data = verses;
     if (language && LANGUAGES.includes(language)) {
-      data = verses.map(v => ({
+      data = verses.map((v) => ({
         ...v,
         translation: v.translations?.[language] || null,
         audioUrl: v.audioUrls?.[language] || null,
-        // Remove full translations/audio objects
+
         translations: undefined,
         audioUrls: undefined
       }));
@@ -69,9 +69,9 @@ const getVerses = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/verses/:id — Get single verse
-// ─────────────────────────────────────────────────────
+
+
+
 const getVerseById = async (req, res, next) => {
   try {
     const verse = await Verse.findById(req.params.id).lean();
@@ -92,18 +92,18 @@ const getVerseById = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/verses/today — Get today's verse for the user
-// ─────────────────────────────────────────────────────
+
+
+
 const getTodayVerse = async (req, res, next) => {
   try {
     const user = req.user;
 
-    // Find the next verse in the user's religion
-    const verse = await Verse.findOne({ religion: user.religion })
-      .sort({ chapter: 1, verseNumber: 1 })
-      .skip(user.currentVerseIndex)
-      .lean();
+
+    const verse = await Verse.findOne({ religion: user.religion }).
+    sort({ chapter: 1, verseNumber: 1 }).
+    skip(user.currentVerseIndex).
+    lean();
 
     if (!verse) {
       return res.status(200).json({
@@ -113,7 +113,7 @@ const getTodayVerse = async (req, res, next) => {
       });
     }
 
-    // Shape response based on user's language
+
     const lang = user.language || 'english';
     const response = {
       id: verse._id,
@@ -139,9 +139,9 @@ const getTodayVerse = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/verses/random — Get a random verse
-// ─────────────────────────────────────────────────────
+
+
+
 const getRandomVerse = async (req, res, next) => {
   try {
     const { religion, language } = req.query;
@@ -180,9 +180,9 @@ const getRandomVerse = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// POST /api/verses — Create verse (Admin)
-// ─────────────────────────────────────────────────────
+
+
+
 const createVerse = async (req, res, next) => {
   try {
     const verse = await Verse.create(req.body);
@@ -197,9 +197,9 @@ const createVerse = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// PUT /api/verses/:id — Update verse (Admin)
-// ─────────────────────────────────────────────────────
+
+
+
 const updateVerse = async (req, res, next) => {
   try {
     const verse = await Verse.findByIdAndUpdate(
@@ -225,9 +225,9 @@ const updateVerse = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// DELETE /api/verses/:id — Delete verse (Admin)
-// ─────────────────────────────────────────────────────
+
+
+
 const deleteVerse = async (req, res, next) => {
   try {
     const verse = await Verse.findByIdAndDelete(req.params.id);
@@ -248,9 +248,9 @@ const deleteVerse = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/verses/chapters — List all chapters for a book
-// ─────────────────────────────────────────────────────
+
+
+
 const getChapters = async (req, res, next) => {
   try {
     const { religion, book } = req.query;
@@ -260,17 +260,17 @@ const getChapters = async (req, res, next) => {
     if (book) filter.book = book;
 
     const chapters = await Verse.aggregate([
-      { $match: filter },
-      {
-        $group: {
-          _id: { book: '$book', chapter: '$chapter' },
-          verseCount: { $sum: 1 }
-        }
-      },
-      { $sort: { '_id.book': 1, '_id.chapter': 1 } }
-    ]);
+    { $match: filter },
+    {
+      $group: {
+        _id: { book: '$book', chapter: '$chapter' },
+        verseCount: { $sum: 1 }
+      }
+    },
+    { $sort: { '_id.book': 1, '_id.chapter': 1 } }]
+    );
 
-    const result = chapters.map(c => ({
+    const result = chapters.map((c) => ({
       book: c._id.book,
       chapter: c._id.chapter,
       verseCount: c.verseCount

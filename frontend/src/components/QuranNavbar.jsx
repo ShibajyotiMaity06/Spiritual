@@ -3,10 +3,10 @@ import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function QuranNavbar() {
-    const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-    return (
-        <nav className="absolute top-0 w-full z-50 bg-transparent">
+  return (
+    <nav className="absolute top-0 w-full z-50 bg-transparent">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-24">
                     <div className="flex-shrink-0 flex items-center gap-3">
@@ -28,13 +28,13 @@ export default function QuranNavbar() {
                 </div>
             </div>
 
-            {isOpen && (
-                <div className="md:hidden bg-[#F4FDF8] border-b border-gray-200 px-4 pt-2 pb-6 shadow-xl absolute w-full">
+            {isOpen &&
+      <div className="md:hidden bg-[#F4FDF8] border-b border-gray-200 px-4 pt-2 pb-6 shadow-xl absolute w-full">
                     <div className="pt-4">
                         <Link to="#pricing" className="block w-full text-center px-6 py-3 rounded-xl bg-[#1A2520] text-white hover:bg-black font-medium">Subscribe</Link>
                     </div>
                 </div>
-            )}
-        </nav>
-    );
+      }
+        </nav>);
+
 }

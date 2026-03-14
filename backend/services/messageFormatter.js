@@ -1,30 +1,30 @@
-// ═══════════════════════════════════════════════════════
-// services/messageFormatter.js — Format verses for delivery
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
 
-// ─────────────────────────────────────────────────────
-// Check if user is eligible for audio content
-// Audio for: paid_standard, paid_premium
-// Bible has NO audio regardless of plan
-// ─────────────────────────────────────────────────────
+
+
+
+
+
 function userGetsAudio(user) {
   if (user.book === 'bible') return false;
   return ['paid_standard', 'paid_premium'].includes(user.subscriptionStatus);
 }
 
-// ─────────────────────────────────────────────────────
-// Get audio URL for a verse (only Hindi & English)
-// ─────────────────────────────────────────────────────
+
+
+
 function getAudioUrl(verseId, language) {
   const lang = language === 'hindi' ? 'hindi' : 'english';
   return `${BASE_URL}/audio/${verseId}_${lang}.mp3`;
 }
 
-// ─────────────────────────────────────────────────────
-// Get the translation text for user's language (Gita)
-// ─────────────────────────────────────────────────────
+
+
+
 function getTranslation(verse, language) {
   if (language === 'english') {
     return verse.english || verse.translations?.english || '';
@@ -32,10 +32,10 @@ function getTranslation(verse, language) {
   return verse.translations?.[language] || verse.translations?.hindi || verse.english || '';
 }
 
-// ─────────────────────────────────────────────────────
-// Generate streak HTML block (reusable across books)
-// streak = { day: number, message: string } or null
-// ─────────────────────────────────────────────────────
+
+
+
+
 function buildStreakEmailBlock(streak, themeColor) {
   if (!streak) return '';
   return `
@@ -60,9 +60,9 @@ function buildStreakWhatsApp(streak) {
   return `\n\n🔥 *Day ${streak.day} Streak*\n_${streak.message}_`;
 }
 
-// ═══════════════════════════════════════════════════════
-// GITA FORMATTERS
-// ═══════════════════════════════════════════════════════
+
+
+
 
 function formatWhatsAppMessage(verse, user, streak) {
   const chapter = verse.chapter;
@@ -224,9 +224,9 @@ function formatEmailHTML(verse, user, streak) {
 </html>`;
 }
 
-// ═══════════════════════════════════════════════════════
-// QURAN FORMATTERS
-// ═══════════════════════════════════════════════════════
+
+
+
 
 function formatQuranWhatsAppMessage(verses, user, streak) {
   const first = verses[0];
@@ -258,7 +258,7 @@ function formatQuranWhatsAppMessage(verses, user, streak) {
 
 function formatQuranEmailSubject(verses) {
   const first = verses[0];
-  const verseNums = verses.map(v => v.verse).join(' & ');
+  const verseNums = verses.map((v) => v.verse).join(' & ');
   return `☪️ Quran – Surah ${first.surah}: ${first.transliteration} · Verse ${verseNums} | DailyFaith`;
 }
 
@@ -268,7 +268,7 @@ function formatQuranEmailHTML(verses, user, streak) {
   const surahName = first.name;
   const transliteration = first.transliteration;
   const surahMeaning = first.surahMeaning;
-  const verseNums = verses.map(v => v.verse).join(' & ');
+  const verseNums = verses.map((v) => v.verse).join(' & ');
   const includeAudio = userGetsAudio(user);
 
   let verseBlocksHTML = '';
@@ -286,7 +286,7 @@ function formatQuranEmailHTML(verses, user, streak) {
             </td>
           </tr>
           <tr>
-            <td style="background-color: #FFFFFF; padding: 16px 40px ${(isLast && !includeAudio) ? '40px' : '8px'} 40px; border-left: 1px solid #D4EDDA; border-right: 1px solid #D4EDDA;">
+            <td style="background-color: #FFFFFF; padding: 16px 40px ${isLast && !includeAudio ? '40px' : '8px'} 40px; border-left: 1px solid #D4EDDA; border-right: 1px solid #D4EDDA;">
               <p style="margin: 0; font-size: 16px; line-height: 1.7; color: #333333;">
                 <span style="color: #28A745; font-weight: bold;">${v.verse}.</span> ${v.english}
               </p>
@@ -364,9 +364,9 @@ function formatQuranEmailHTML(verses, user, streak) {
 </html>`;
 }
 
-// ═══════════════════════════════════════════════════════
-// BIBLE FORMATTERS (Gospel of John, KJV — NO audio)
-// ═══════════════════════════════════════════════════════
+
+
+
 
 function formatBibleWhatsAppMessage(verse, user, streak) {
   let message = `✝️ *Gospel of John – Chapter ${verse.chapter} Verse ${verse.verse}*\n\n`;

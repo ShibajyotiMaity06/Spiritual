@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════
-// models/DeliveryLog.js
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const mongoose = require('mongoose');
 
@@ -28,13 +28,13 @@ const deliveryLogSchema = new mongoose.Schema({
     default: 'sent'
   },
 
-  cost: { type: Number, default: 0 }, // In INR
+  cost: { type: Number, default: 0 },
 
-  // WhatsApp specific
+
   whatsappMessageId: String,
   whatsappStatus: String,
 
-  // Email specific
+
   emailMessageId: String,
   emailOpened: { type: Boolean, default: false },
   emailClicked: { type: Boolean, default: false },
@@ -44,7 +44,7 @@ const deliveryLogSchema = new mongoose.Schema({
   readAt: Date
 });
 
-// Indexes
+
 deliveryLogSchema.index({ userId: 1, timestamp: -1 });
 deliveryLogSchema.index({ deliveryMethod: 1, timestamp: -1 });
 

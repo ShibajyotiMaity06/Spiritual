@@ -1,28 +1,28 @@
-// ═══════════════════════════════════════════════════════
-// models/UserQuizAnswer.js
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const mongoose = require('mongoose');
 
 const userQuizAnswerSchema = new mongoose.Schema({
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  quizId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Quiz', 
-    required: true 
+  quizId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Quiz',
+    required: true
   },
-  
-  answer: { 
-    type: String, 
+
+  answer: {
+    type: String,
     enum: ['A', 'B', 'C'],
-    required: true 
+    required: true
   },
   isCorrect: { type: Boolean, required: true },
-  
+
   timestamp: { type: Date, default: Date.now }
 });
 

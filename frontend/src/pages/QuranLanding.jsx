@@ -4,19 +4,19 @@ import Footer from '../components/Footer';
 import PricingSection from '../components/PricingSection';
 
 const languages = [
-    'اردو (Urdu)',
-    'English',
-    'हिन्दी (Hindi)'
-];
+'اردو (Urdu)',
+'English',
+'हिन्दी (Hindi)'];
+
 
 export default function QuranLanding() {
-    const [selectedLang, setSelectedLang] = useState(languages[0]);
-    const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(languages[0]);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
-    return (
-        <div className="min-h-screen flex flex-col bg-[#E8F5EE] font-sans">
+  return (
+    <div className="min-h-screen flex flex-col bg-[#E8F5EE] font-sans">
             <main className="flex-1">
-                {/* Hero Section */}
+                {}
                 <section className="relative pt-16 pb-20 px-4 sm:px-6 lg:px-8">
                     <div className="max-w-7xl mx-auto">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -38,32 +38,32 @@ export default function QuranLanding() {
                                     <div className="bg-white p-2 rounded-2xl shadow-lg border border-green-100 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                                         <div className="relative w-full sm:w-auto">
                                             <button
-                                                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                                                className="flex items-center justify-between w-full sm:w-40 px-4 py-3 text-[#1A2520] font-medium bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
-                                            >
+                        onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                        className="flex items-center justify-between w-full sm:w-40 px-4 py-3 text-[#1A2520] font-medium bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
+                        
                                                 {selectedLang}
                                                 <ChevronDown size={18} className="text-gray-400" />
                                             </button>
 
-                                            {langDropdownOpen && (
-                                                <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                                                    {languages.map(lang => (
-                                                        <button
-                                                            key={lang}
-                                                            onClick={() => { setSelectedLang(lang); setLangDropdownOpen(false); }}
-                                                            className="w-full text-left px-4 py-2 hover:bg-green-50 text-[#1A2520] transition-colors"
-                                                        >
+                                            {langDropdownOpen &&
+                      <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                                                    {languages.map((lang) =>
+                        <button
+                          key={lang}
+                          onClick={() => {setSelectedLang(lang);setLangDropdownOpen(false);}}
+                          className="w-full text-left px-4 py-2 hover:bg-green-50 text-[#1A2520] transition-colors">
+                          
                                                             {lang}
                                                         </button>
-                                                    ))}
+                        )}
                                                 </div>
-                                            )}
+                      }
                                         </div>
 
                                         <button
-                                            onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
-                                            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#27AE60] to-[#2ECC71] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity"
-                                        >
+                      onClick={() => document.getElementById('pricing').scrollIntoView({ behavior: 'smooth' })}
+                      className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-[#27AE60] to-[#2ECC71] hover:opacity-90 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity">
+                      
                                             Start Journey <ArrowRight size={18} />
                                         </button>
                                     </div>
@@ -79,7 +79,7 @@ export default function QuranLanding() {
                     </div>
                 </section>
 
-                {/* Inherit generic PricingSection */}
+                {}
                 <div id="pricing" className="bg-[#F4FDF8]">
                     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-serif font-bold text-center text-[#1A2520] mb-8">Choose Your Plan</h2>
@@ -89,7 +89,7 @@ export default function QuranLanding() {
 
 
 
-                {/* Verse Showcase */}
+                {}
                 <section className="py-24 bg-white border-y border-green-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
@@ -99,7 +99,7 @@ export default function QuranLanding() {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4 md:px-0 mt-12 bg-[radial-gradient(ellipse_at_center,rgba(39,174,96,0.05),transparent_70%)] py-12">
 
-                            {/* Card 1 */}
+                            {}
                             <div className="bg-[#FDFFFE] rounded-2xl border-2 border-green-50 p-8 shadow-sm flex flex-col justify-center items-center text-center transform md:translate-y-8">
                                 <span className="text-brand-green font-bold tracking-widest text-xs mb-6 uppercase">Surah Al-Baqarah, Ayat 286</span>
                                 <p className="font-serif text-2xl text-[#1A2520] italic leading-relaxed mb-6">
@@ -110,7 +110,7 @@ export default function QuranLanding() {
                                 </div>
                             </div>
 
-                            {/* Card 2 (Center) */}
+                            {}
                             <div className="bg-[#FDFFFE] rounded-2xl border-2 border-brand-green relative p-10 shadow-xl shadow-brand-green/10 flex flex-col justify-center items-center text-center z-10 transform md:-translate-y-4">
                                 <span className="text-brand-green font-bold tracking-widest text-sm mb-6 uppercase">Surah Ar-Ra'd, Ayat 28</span>
                                 <p className="font-serif text-3xl font-medium text-[#1A2520] leading-snug mb-8">
@@ -121,7 +121,7 @@ export default function QuranLanding() {
                                 </p>
                             </div>
 
-                            {/* Card 3 */}
+                            {}
                             <div className="bg-[#FDFFFE] rounded-2xl border-2 border-green-50 p-8 shadow-sm flex flex-col justify-center items-center text-center transform md:translate-y-8">
                                 <span className="text-brand-green font-bold tracking-widest text-xs mb-6 uppercase">Surah Ash-Sharh, Ayat 5</span>
                                 <p className="font-serif text-2xl text-[#1A2520] italic leading-relaxed mb-6">
@@ -136,7 +136,7 @@ export default function QuranLanding() {
                     </div>
                 </section>
 
-                {/* Testimonials */}
+                {}
                 <section className="py-24 bg-[#F4FDF8]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -178,6 +178,6 @@ export default function QuranLanding() {
             </main>
 
             <Footer />
-        </div>
-    );
+        </div>);
+
 }

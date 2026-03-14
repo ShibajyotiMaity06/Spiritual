@@ -1,14 +1,14 @@
-// ═══════════════════════════════════════════════════════
-// controllers/quizController.js — Quiz CRUD & Answers
-// ═══════════════════════════════════════════════════════
+
+
+
 
 const Quiz = require('../models/Quiz');
 const UserQuizAnswer = require('../models/UserQuizAnswer');
 const { RELIGIONS, LANGUAGES } = require('../config/constants');
 
-// ─────────────────────────────────────────────────────
-// GET /api/quizzes — Get quizzes with filters
-// ─────────────────────────────────────────────────────
+
+
+
 const getQuizzes = async (req, res, next) => {
   try {
     const { religion, language, page = 1, limit = 10 } = req.query;
@@ -20,19 +20,19 @@ const getQuizzes = async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
 
     const [quizzes, total] = await Promise.all([
-      Quiz.find(filter)
-        .populate('verseId', 'chapter verseNumber book')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      Quiz.countDocuments(filter)
-    ]);
+    Quiz.find(filter).
+    populate('verseId', 'chapter verseNumber book').
+    sort({ createdAt: -1 }).
+    skip(skip).
+    limit(Number(limit)).
+    lean(),
+    Quiz.countDocuments(filter)]
+    );
 
-    // Strip correct answer for non-admin users
-    const sanitized = quizzes.map(q => ({
+
+    const sanitized = quizzes.map((q) => ({
       ...q,
-      correctAnswer: undefined // Don't leak the answer
+      correctAnswer: undefined
     }));
 
     res.status(200).json({
@@ -52,25 +52,25 @@ const getQuizzes = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/quizzes/today — Get today's quiz for user
-// ─────────────────────────────────────────────────────
+
+
+
 const getTodayQuiz = async (req, res, next) => {
   try {
     const user = req.user;
 
-    // Find a quiz the user hasn't answered yet
-    const answeredQuizIds = await UserQuizAnswer.find({ userId: user._id })
-      .distinct('quizId');
+
+    const answeredQuizIds = await UserQuizAnswer.find({ userId: user._id }).
+    distinct('quizId');
 
     const quiz = await Quiz.findOne({
       religion: user.religion,
       language: user.language,
       isActive: true,
       _id: { $nin: answeredQuizIds }
-    })
-      .populate('verseId', 'chapter verseNumber book originalText')
-      .lean();
+    }).
+    populate('verseId', 'chapter verseNumber book originalText').
+    lean();
 
     if (!quiz) {
       return res.status(200).json({
@@ -80,7 +80,7 @@ const getTodayQuiz = async (req, res, next) => {
       });
     }
 
-    // Remove correct answer
+
     const { correctAnswer, ...safeQuiz } = quiz;
 
     res.status(200).json({
@@ -92,9 +92,9 @@ const getTodayQuiz = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// POST /api/quizzes/:id/answer — Submit quiz answer
-// ─────────────────────────────────────────────────────
+
+
+
 const submitAnswer = async (req, res, next) => {
   try {
     const { answer } = req.body;
@@ -107,7 +107,7 @@ const submitAnswer = async (req, res, next) => {
       });
     }
 
-    // Check if already answered
+
     const existing = await UserQuizAnswer.findOne({
       userId: req.user._id,
       quizId
@@ -130,7 +130,7 @@ const submitAnswer = async (req, res, next) => {
 
     const isCorrect = answer.toUpperCase() === quiz.correctAnswer;
 
-    // Save answer
+
     const userAnswer = await UserQuizAnswer.create({
       userId: req.user._id,
       quizId,
@@ -138,7 +138,7 @@ const submitAnswer = async (req, res, next) => {
       isCorrect
     });
 
-    // Update quiz stats
+
     await Quiz.findByIdAndUpdate(quizId, {
       $inc: {
         totalAttempts: 1,
@@ -160,18 +160,18 @@ const submitAnswer = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// GET /api/quizzes/my-stats — Quiz stats for user
-// ─────────────────────────────────────────────────────
+
+
+
 const getMyQuizStats = async (req, res, next) => {
   try {
     const answers = await UserQuizAnswer.find({ userId: req.user._id }).lean();
 
     const totalAnswered = answers.length;
-    const totalCorrect = answers.filter(a => a.isCorrect).length;
-    const accuracy = totalAnswered > 0
-      ? Math.round((totalCorrect / totalAnswered) * 100)
-      : 0;
+    const totalCorrect = answers.filter((a) => a.isCorrect).length;
+    const accuracy = totalAnswered > 0 ?
+    Math.round(totalCorrect / totalAnswered * 100) :
+    0;
 
     res.status(200).json({
       success: true,
@@ -189,9 +189,9 @@ const getMyQuizStats = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// POST /api/quizzes — Create quiz (Admin)
-// ─────────────────────────────────────────────────────
+
+
+
 const createQuiz = async (req, res, next) => {
   try {
     const quiz = await Quiz.create(req.body);
@@ -206,9 +206,9 @@ const createQuiz = async (req, res, next) => {
   }
 };
 
-// ─────────────────────────────────────────────────────
-// DELETE /api/quizzes/:id — Delete quiz (Admin)
-// ─────────────────────────────────────────────────────
+
+
+
 const deleteQuiz = async (req, res, next) => {
   try {
     const quiz = await Quiz.findByIdAndDelete(req.params.id);
@@ -220,7 +220,7 @@ const deleteQuiz = async (req, res, next) => {
       });
     }
 
-    // Also remove answers for this quiz
+
     await UserQuizAnswer.deleteMany({ quizId: req.params.id });
 
     res.status(200).json({
